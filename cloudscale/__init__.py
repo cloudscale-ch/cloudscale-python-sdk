@@ -19,7 +19,6 @@ from .error import CloudscaleException, CloudscaleApiException # noqa F401
 
 from .version import __version__
 
-APP_NAME = 'cloudscale-cli'
 CLOUDSCALE_API_ENDPOINT = 'https://api.cloudscale.ch/v1'
 CLOUDSCALE_CONFIG = 'cloudscale.ini'
 

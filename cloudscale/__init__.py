@@ -1,6 +1,7 @@
 import os
 import configparser
 import logging
+from xdg import XDG_CONFIG_HOME
 
 from .http import RestAPIClient
 from .lib.server import Server
@@ -91,6 +92,7 @@ class Cloudscale:
         config_file = os.getenv('CLOUDSCALE_CONFIG', CLOUDSCALE_CONFIG)
 
         paths = (
+            os.path.join(XDG_CONFIG_HOME, 'cloudscale', config_file),
             os.path.join(os.path.expanduser('~'), '.{}'.format(config_file)),
             os.path.join(os.getcwd(), config_file),
         )

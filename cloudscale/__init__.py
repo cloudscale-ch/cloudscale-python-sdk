@@ -91,6 +91,7 @@ class Cloudscale:
         config_file = os.getenv('CLOUDSCALE_CONFIG', CLOUDSCALE_CONFIG)
 
         paths = (
+            os.path.join(os.path.expanduser(os.getenv('XDG_CONFIG_HOME', '~/.config')), 'cloudscale', config_file),
             os.path.join(os.path.expanduser('~'), '.{}'.format(config_file)),
             os.path.join(os.getcwd(), config_file),
         )

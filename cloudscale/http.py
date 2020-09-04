@@ -64,10 +64,17 @@ class RestAPIClient:
         logger.info(f"HTTP payload: {data}")
         return data
 
+    def _is_href(self, resource: str, resource_id: str) -> bool:
+        # If resource_id looks like an href
+        return resource_id and resource_id.startswith(f"{self.endpoint}/{resource}")
+
     def get_resources(self, resource: str, payload: dict = None, resource_id: str = None) -> dict:
-        query_url = f"{self.endpoint}/{resource}"
-        if resource_id:
-            query_url = f"{query_url}/{resource_id}"
+        if self._is_href(resource, resource_id):
+            query_url = resource_id
+        else:
+            query_url = f"{self.endpoint}/{resource}"
+            if resource_id:
+                query_url = f"{query_url}/{resource_id}"
 
         if payload:
             for k, v in payload.items():
@@ -93,7 +100,11 @@ class RestAPIClient:
             r = requests.post(query_url, json=data, headers=self.headers, timeout=self.timeout)
             return self._return_result(r)
 
-        query_url += f"/{resource_id}"
+        if self._is_href(resource, resource_id):
+            query_url = resource_id
+        else:
+            query_url += f"/{resource_id}"
+
         if action:
             query_url += f"/{action}"
             logger.info(f"HTTP POST to {query_url}")
@@ -105,7 +116,10 @@ class RestAPIClient:
             return self._return_result(r)
 
     def delete_resource(self, resource: str, resource_id: str) -> dict:
-        query_url = f"{self.endpoint}/{resource}/{resource_id}"
+        if self._is_href(resource, resource_id):
+            query_url = resource_id
+        else:
+            query_url = f"{self.endpoint}/{resource}/{resource_id}"
         logger.info(f"HTTP DELETE to {query_url}")
         r = requests.delete(query_url, headers=self.headers, timeout=self.timeout)
         return self._return_result(r)

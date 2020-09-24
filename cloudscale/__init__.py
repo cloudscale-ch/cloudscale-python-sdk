@@ -20,7 +20,7 @@ from .error import CloudscaleException, CloudscaleApiException # noqa F401
 
 from .version import __version__
 
-CLOUDSCALE_API_ENDPOINT = os.getenv('CLOUDSCALE_API_ENDPOINT', 'https://api.cloudscale.ch/v1')
+CLOUDSCALE_API_URL = os.getenv('CLOUDSCALE_API_URL', 'https://api.cloudscale.ch/v1')
 CLOUDSCALE_CONFIG = 'cloudscale.ini'
 
 
@@ -129,7 +129,7 @@ class Cloudscale:
         try:
             client = RestAPIClient(
                 api_token=self.api_token,
-                endpoint=CLOUDSCALE_API_ENDPOINT,
+                api_url=CLOUDSCALE_API_URL,
                 user_agent=f'cloudscale-sdk {__version__}',
                 timeout=self.timeout,
             )

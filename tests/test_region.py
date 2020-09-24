@@ -1,4 +1,4 @@
-from cloudscale import Cloudscale, CloudscaleApiException, CloudscaleException, CLOUDSCALE_API_ENDPOINT
+from cloudscale import Cloudscale, CloudscaleApiException, CloudscaleException, CLOUDSCALE_API_URL
 import responses
 
 REGION_RESP = {
@@ -15,17 +15,17 @@ REGION_RESP = {
 def test_region_get_all():
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/regions',
+        CLOUDSCALE_API_URL + '/regions',
         json=[REGION_RESP],
         status=200)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/regions',
+        CLOUDSCALE_API_URL + '/regions',
         json=[REGION_RESP],
         status=200)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/regions',
+        CLOUDSCALE_API_URL + '/regions',
         json={},
         status=500)
     cloudscale = Cloudscale(api_token="token")

@@ -5,17 +5,17 @@ from .log import logger
 
 class RestAPIClient:
 
-    def __init__(self, endpoint: str, api_token: str, user_agent: str, timeout: int = 60):
+    def __init__(self, api_url: str, api_token: str, user_agent: str, timeout: int = 60):
         """Rest API Client
 
         Args:
-            endpoint (str): API HTTP endpoint
+            api_url (str): API HTTP URL
             api_token (str): API bearer token
             user_agent (str): HTTP user agent
             timeout (int, optional): HTTP timeout. Defaults to 60.
         """
 
-        self.endpoint = endpoint
+        self.api_url = api_url
         self.timeout = timeout
         self.headers = {
             'Authorization': f"Bearer {api_token}",
@@ -65,7 +65,7 @@ class RestAPIClient:
         return data
 
     def get_resources(self, resource: str, payload: dict = None, resource_id: str = None) -> dict:
-        query_url = f"{self.endpoint}/{resource}"
+        query_url = f"{self.api_url}/{resource}"
         if resource_id:
             query_url = f"{query_url}/{resource_id}"
 
@@ -86,7 +86,7 @@ class RestAPIClient:
 
     def post_patch_resource(self, resource: str, payload: dict = None, resource_id: str = None, action: str = None) -> dict:
         data = self._handle_payload(payload)
-        query_url = f"{self.endpoint}/{resource}"
+        query_url = f"{self.api_url}/{resource}"
 
         if not resource_id:
             logger.info(f"HTTP POST to {query_url}")
@@ -105,7 +105,7 @@ class RestAPIClient:
             return self._return_result(r)
 
     def delete_resource(self, resource: str, resource_id: str) -> dict:
-        query_url = f"{self.endpoint}/{resource}/{resource_id}"
+        query_url = f"{self.api_url}/{resource}/{resource_id}"
         logger.info(f"HTTP DELETE to {query_url}")
         r = requests.delete(query_url, headers=self.headers, timeout=self.timeout)
         return self._return_result(r)

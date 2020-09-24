@@ -1,6 +1,6 @@
 import os
 import responses
-from cloudscale import Cloudscale, CloudscaleApiException, CloudscaleException, CLOUDSCALE_API_ENDPOINT
+from cloudscale import Cloudscale, CloudscaleApiException, CloudscaleException, CLOUDSCALE_API_URL
 from configparser import ConfigParser
 
 
@@ -59,14 +59,14 @@ def test_mutually_exclusvie_api_key_and_profile():
 def test_exception_returns():
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/objects-users/unknown',
+        CLOUDSCALE_API_URL + '/objects-users/unknown',
         json={
             "detail": "Not found."
         },
         status=404)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/objects-users/unknown',
+        CLOUDSCALE_API_URL + '/objects-users/unknown',
         json={},
         status=500)
 

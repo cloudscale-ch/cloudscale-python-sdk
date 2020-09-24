@@ -1,4 +1,4 @@
-from cloudscale import Cloudscale, CloudscaleApiException, CloudscaleException, CLOUDSCALE_API_ENDPOINT
+from cloudscale import Cloudscale, CloudscaleApiException, CloudscaleException, CLOUDSCALE_API_URL
 import responses
 
 IMAGE_RESP = {
@@ -20,17 +20,17 @@ IMAGE_RESP = {
 def test_image_get_all():
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/images',
+        CLOUDSCALE_API_URL + '/images',
         json=[IMAGE_RESP],
         status=200)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/images',
+        CLOUDSCALE_API_URL + '/images',
         json=[IMAGE_RESP],
         status=200)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/images',
+        CLOUDSCALE_API_URL + '/images',
         json={},
         status=500)
 

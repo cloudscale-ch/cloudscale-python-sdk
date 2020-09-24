@@ -1,4 +1,4 @@
-from cloudscale import Cloudscale, CloudscaleApiException, CloudscaleException, CLOUDSCALE_API_ENDPOINT
+from cloudscale import Cloudscale, CloudscaleApiException, CloudscaleException, CLOUDSCALE_API_URL
 import responses
 
 SUBNET_RESP = {
@@ -20,17 +20,17 @@ def test_subnet_get_all():
     uuid = "33333333-1864-4608-853a-0771b6885a3a"
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/subnets',
+        CLOUDSCALE_API_URL + '/subnets',
         json=[SUBNET_RESP],
         status=200)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/subnets',
+        CLOUDSCALE_API_URL + '/subnets',
         json=[SUBNET_RESP],
         status=200)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/subnets',
+        CLOUDSCALE_API_URL + '/subnets',
         json={},
         status=500)
 
@@ -43,17 +43,17 @@ def test_subnet_get_by_uuid():
     uuid = "33333333-1864-4608-853a-0771b6885a3a"
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/subnets/' + uuid,
+        CLOUDSCALE_API_URL + '/subnets/' + uuid,
         json=SUBNET_RESP,
         status=200)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/subnets/' + uuid,
+        CLOUDSCALE_API_URL + '/subnets/' + uuid,
         json=SUBNET_RESP,
         status=200)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/subnets/' + uuid,
+        CLOUDSCALE_API_URL + '/subnets/' + uuid,
         json={},
         status=500)
 
@@ -66,21 +66,21 @@ def test_subnet_delete():
     uuid = "33333333-1864-4608-853a-0771b6885a3a"
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/subnets/' + uuid,
+        CLOUDSCALE_API_URL + '/subnets/' + uuid,
         json=SUBNET_RESP,
         status=200)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/subnets/unknown',
+        CLOUDSCALE_API_URL + '/subnets/unknown',
         json=SUBNET_RESP,
         status=200)
     responses.add(
         responses.DELETE,
-        CLOUDSCALE_API_ENDPOINT + '/subnets/' + uuid,
+        CLOUDSCALE_API_URL + '/subnets/' + uuid,
         status=204)
     responses.add(
         responses.DELETE,
-        CLOUDSCALE_API_ENDPOINT + '/subnets/unknown',
+        CLOUDSCALE_API_URL + '/subnets/unknown',
         json={
             "detail": "Not found."
         },
@@ -100,17 +100,17 @@ def test_subnet_delete():
 def test_subnet_create():
     responses.add(
         responses.POST,
-        CLOUDSCALE_API_ENDPOINT + '/subnets',
+        CLOUDSCALE_API_URL + '/subnets',
         json=SUBNET_RESP,
         status=201)
     responses.add(
         responses.POST,
-        CLOUDSCALE_API_ENDPOINT + '/subnets',
+        CLOUDSCALE_API_URL + '/subnets',
         json=SUBNET_RESP,
         status=201)
     responses.add(
         responses.POST,
-        CLOUDSCALE_API_ENDPOINT + '/subnets',
+        CLOUDSCALE_API_URL + '/subnets',
         json=SUBNET_RESP,
         status=500)
 
@@ -128,27 +128,27 @@ def test_subnet_update():
 
     responses.add(
         responses.PATCH,
-        CLOUDSCALE_API_ENDPOINT + '/subnets/' + uuid,
+        CLOUDSCALE_API_URL + '/subnets/' + uuid,
         json=SUBNET_RESP,
         status=204)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/subnets/' + uuid,
+        CLOUDSCALE_API_URL + '/subnets/' + uuid,
         json=SUBNET_RESP,
         status=200)
     responses.add(
         responses.PATCH,
-        CLOUDSCALE_API_ENDPOINT + '/subnets/' + uuid,
+        CLOUDSCALE_API_URL + '/subnets/' + uuid,
         json=SUBNET_RESP,
         status=204)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/subnets/' + uuid,
+        CLOUDSCALE_API_URL + '/subnets/' + uuid,
         json=SUBNET_RESP,
         status=200)
     responses.add(
         responses.PATCH,
-        CLOUDSCALE_API_ENDPOINT + '/subnets/' + uuid,
+        CLOUDSCALE_API_URL + '/subnets/' + uuid,
         json={},
         status=500)
     cloudscale = Cloudscale(api_token="token")

@@ -1,4 +1,4 @@
-from cloudscale import Cloudscale, CloudscaleApiException, CloudscaleException, CLOUDSCALE_API_ENDPOINT
+from cloudscale import Cloudscale, CloudscaleApiException, CloudscaleException, CLOUDSCALE_API_URL
 import responses
 
 FLOATING_IP_RESP = {
@@ -24,17 +24,17 @@ def test_floating_ip_get_all():
     network_id = "192.0.2.123"
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/floating-ips',
+        CLOUDSCALE_API_URL + '/floating-ips',
         json=[FLOATING_IP_RESP],
         status=200)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/floating-ips',
+        CLOUDSCALE_API_URL + '/floating-ips',
         json=[FLOATING_IP_RESP],
         status=200)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/floating-ips',
+        CLOUDSCALE_API_URL + '/floating-ips',
         json={},
         status=500)
 
@@ -47,17 +47,17 @@ def test_floating_ip_get_by_uuid():
     network_id = "192.0.2.123"
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/floating-ips/' + network_id,
+        CLOUDSCALE_API_URL + '/floating-ips/' + network_id,
         json=FLOATING_IP_RESP,
         status=200)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/floating-ips/' + network_id,
+        CLOUDSCALE_API_URL + '/floating-ips/' + network_id,
         json=FLOATING_IP_RESP,
         status=200)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/floating-ips/' + network_id,
+        CLOUDSCALE_API_URL + '/floating-ips/' + network_id,
         json={},
         status=500)
 
@@ -70,21 +70,21 @@ def test_floating_ip_delete():
     network_id = "192.0.2.123"
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/floating-ips/' + network_id,
+        CLOUDSCALE_API_URL + '/floating-ips/' + network_id,
         json=FLOATING_IP_RESP,
         status=200)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/floating-ips/unknown',
+        CLOUDSCALE_API_URL + '/floating-ips/unknown',
         json=FLOATING_IP_RESP,
         status=200)
     responses.add(
         responses.DELETE,
-        CLOUDSCALE_API_ENDPOINT + '/floating-ips/' + network_id,
+        CLOUDSCALE_API_URL + '/floating-ips/' + network_id,
         status=204)
     responses.add(
         responses.DELETE,
-        CLOUDSCALE_API_ENDPOINT + '/floating-ips/unknown',
+        CLOUDSCALE_API_URL + '/floating-ips/unknown',
         json={
             "detail": "Not found."
         },
@@ -106,17 +106,17 @@ def test_floating_ip_create():
     server_uuid = "47cec963-fcd2-482f-bdb6-24461b2d47b1"
     responses.add(
         responses.POST,
-        CLOUDSCALE_API_ENDPOINT + '/floating-ips',
+        CLOUDSCALE_API_URL + '/floating-ips',
         json=FLOATING_IP_RESP,
         status=201)
     responses.add(
         responses.POST,
-        CLOUDSCALE_API_ENDPOINT + '/floating-ips',
+        CLOUDSCALE_API_URL + '/floating-ips',
         json=FLOATING_IP_RESP,
         status=201)
     responses.add(
         responses.POST,
-        CLOUDSCALE_API_ENDPOINT + '/floating-ips',
+        CLOUDSCALE_API_URL + '/floating-ips',
         json=FLOATING_IP_RESP,
         status=500)
 
@@ -131,27 +131,27 @@ def test_floating_ip_update():
     reverse_ptr = "192.0.2.123.cust.cloudscale.ch"
     responses.add(
         responses.PATCH,
-        CLOUDSCALE_API_ENDPOINT + '/floating-ips/' + network_id,
+        CLOUDSCALE_API_URL + '/floating-ips/' + network_id,
         json=FLOATING_IP_RESP,
         status=204)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/floating-ips/' + network_id,
+        CLOUDSCALE_API_URL + '/floating-ips/' + network_id,
         json=FLOATING_IP_RESP,
         status=200)
     responses.add(
         responses.PATCH,
-        CLOUDSCALE_API_ENDPOINT + '/floating-ips/' + network_id,
+        CLOUDSCALE_API_URL + '/floating-ips/' + network_id,
         json=FLOATING_IP_RESP,
         status=204)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/floating-ips/' + network_id,
+        CLOUDSCALE_API_URL + '/floating-ips/' + network_id,
         json=FLOATING_IP_RESP,
         status=200)
     responses.add(
         responses.PATCH,
-        CLOUDSCALE_API_ENDPOINT + '/floating-ips/' + network_id,
+        CLOUDSCALE_API_URL + '/floating-ips/' + network_id,
         json={},
         status=500)
 
@@ -164,7 +164,7 @@ def test_floating_ip_update():
 def test_floating_ip_get_by_uuid_not_found():
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/floating-ips/unknown',
+        CLOUDSCALE_API_URL + '/floating-ips/unknown',
         json={
             "detail": "Not found."
         },

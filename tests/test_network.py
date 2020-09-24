@@ -1,4 +1,4 @@
-from cloudscale import Cloudscale, CloudscaleApiException, CloudscaleException, CLOUDSCALE_API_ENDPOINT
+from cloudscale import Cloudscale, CloudscaleApiException, CloudscaleException, CLOUDSCALE_API_URL
 import responses
 
 NETWORK_RESP = {
@@ -24,17 +24,17 @@ NETWORK_RESP = {
 def test_network_get_all():
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/networks',
+        CLOUDSCALE_API_URL + '/networks',
         json=[NETWORK_RESP],
         status=200)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/networks',
+        CLOUDSCALE_API_URL + '/networks',
         json=[NETWORK_RESP],
         status=200)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/networks',
+        CLOUDSCALE_API_URL + '/networks',
         json={},
         status=500)
 
@@ -48,17 +48,17 @@ def test_network_get_by_uuid():
     uuid = "2db69ba3-1864-4608-853a-0771b6885a3a"
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/networks/' + uuid,
+        CLOUDSCALE_API_URL + '/networks/' + uuid,
         json=NETWORK_RESP,
         status=200)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/networks/' + uuid,
+        CLOUDSCALE_API_URL + '/networks/' + uuid,
         json=NETWORK_RESP,
         status=200)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/networks/' + uuid,
+        CLOUDSCALE_API_URL + '/networks/' + uuid,
         json={},
         status=500)
 
@@ -67,21 +67,21 @@ def test_network_delete():
     uuid = "2db69ba3-1864-4608-853a-0771b6885a3a"
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/networks/' + uuid,
+        CLOUDSCALE_API_URL + '/networks/' + uuid,
         json=NETWORK_RESP,
         status=200)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/networks/unknown',
+        CLOUDSCALE_API_URL + '/networks/unknown',
         json=NETWORK_RESP,
         status=200)
     responses.add(
         responses.DELETE,
-        CLOUDSCALE_API_ENDPOINT + '/networks/' + uuid,
+        CLOUDSCALE_API_URL + '/networks/' + uuid,
         status=204)
     responses.add(
         responses.DELETE,
-        CLOUDSCALE_API_ENDPOINT + '/networks/unknown',
+        CLOUDSCALE_API_URL + '/networks/unknown',
         json={
             "detail": "Not found."
         },
@@ -103,17 +103,17 @@ def test_network_create():
 
     responses.add(
         responses.POST,
-        CLOUDSCALE_API_ENDPOINT + '/networks',
+        CLOUDSCALE_API_URL + '/networks',
         json=NETWORK_RESP,
         status=201)
     responses.add(
         responses.POST,
-        CLOUDSCALE_API_ENDPOINT + '/networks',
+        CLOUDSCALE_API_URL + '/networks',
         json=NETWORK_RESP,
         status=201)
     responses.add(
         responses.POST,
-        CLOUDSCALE_API_ENDPOINT + '/networks',
+        CLOUDSCALE_API_URL + '/networks',
         json={},
         status=500)
 
@@ -128,27 +128,27 @@ def test_network_update():
     name = "my-network-name"
     responses.add(
         responses.PATCH,
-        CLOUDSCALE_API_ENDPOINT + '/networks/' + uuid,
+        CLOUDSCALE_API_URL + '/networks/' + uuid,
         json=NETWORK_RESP,
         status=204)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/networks/' + uuid,
+        CLOUDSCALE_API_URL + '/networks/' + uuid,
         json=NETWORK_RESP,
         status=200)
     responses.add(
         responses.PATCH,
-        CLOUDSCALE_API_ENDPOINT + '/networks/' + uuid,
+        CLOUDSCALE_API_URL + '/networks/' + uuid,
         json=NETWORK_RESP,
         status=204)
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/networks/' + uuid,
+        CLOUDSCALE_API_URL + '/networks/' + uuid,
         json=NETWORK_RESP,
         status=200)
     responses.add(
         responses.PATCH,
-        CLOUDSCALE_API_ENDPOINT + '/networks/' + uuid,
+        CLOUDSCALE_API_URL + '/networks/' + uuid,
         json={},
         status=500)
 
@@ -161,7 +161,7 @@ def test_network_update():
 def test_network_get_by_uuid_not_found():
     responses.add(
         responses.GET,
-        CLOUDSCALE_API_ENDPOINT + '/networks/unknown',
+        CLOUDSCALE_API_URL + '/networks/unknown',
         json={
             "detail": "Not found."
         },

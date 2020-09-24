@@ -9,7 +9,7 @@ class RestAPIClient:
         """Rest API Client
 
         Args:
-            api_url (str): API HTTP url
+            api_url (str): API HTTP URL
             api_token (str): API bearer token
             user_agent (str): HTTP user agent
             timeout (int, optional): HTTP timeout. Defaults to 60.

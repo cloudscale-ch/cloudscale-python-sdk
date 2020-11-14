@@ -62,7 +62,7 @@ class Volume(CloudscaleMutable):
         """
         payload = {
             'name': name,
-            'server_uuids': server_uuids or None,
+            'server_uuids': server_uuids,
             'size_gb': size_gb,
             'tags': tags,
         }

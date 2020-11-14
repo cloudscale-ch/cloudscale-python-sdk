@@ -44,11 +44,12 @@ class RestAPIClient:
             result['data'] = None
         return result
 
-    def _handle_payload(self, payload: dict) -> dict:
+    def _filter_payload(self, payload: dict, unfilter: list = None) -> dict:
         """ Filters payload
 
         Args:
             payload (dict): payload
+            unfilter (list): list of payload keys allowed to be None
 
         Returns:
             dict: payload
@@ -59,6 +60,8 @@ class RestAPIClient:
         data = dict()
         for k, v in payload.items():
             if v is not None:
+                data[k] = v
+            elif unfilter and k in unfilter:
                 data[k] = v
 
         logger.info(f"HTTP payload: {data}")
@@ -84,8 +87,8 @@ class RestAPIClient:
         r = requests.get(query_url, headers=self.headers, timeout=self.timeout)
         return self._return_result(r)
 
-    def post_patch_resource(self, resource: str, payload: dict = None, resource_id: str = None, action: str = None) -> dict:
-        data = self._handle_payload(payload)
+    def post_patch_resource(self, resource: str, payload: dict = None, resource_id: str = None, action: str = None, unfilter: list = None) -> dict:
+        data = self._handle_payload(payload, unfilter)
         query_url = f"{self.api_url}/{resource}"
 
         if not resource_id:

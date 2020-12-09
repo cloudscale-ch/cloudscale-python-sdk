@@ -14,6 +14,7 @@ from .lib.region import Region
 from .lib.network import Network
 from .lib.subnet import Subnet
 from .lib.objects_user import ObjectsUser
+from .lib.custom_image import CustomImage
 
 from .log import logger
 from .error import CloudscaleException, CloudscaleApiException # noqa F401
@@ -73,6 +74,7 @@ class Cloudscale:
             'network': Network,
             'subnet': Subnet,
             'objects_user': ObjectsUser,
+            'custom_image': CustomImage,
         }
 
 

@@ -36,7 +36,7 @@ class CustomImage(CloudscaleMutable):
             'name': name,
             'slug': slug,
             'zones': zones,
-            'user_data_handing': user_data_handling,
+            'user_data_handling': user_data_handling,
             'source_format': source_format,
             'tags': tags,
         }

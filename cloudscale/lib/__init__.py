@@ -30,10 +30,11 @@ class CloudscaleBase:
             )
         return data
 
-    def get_all(self, filter_tag: str = None) -> list:
+    def get_all(self, path: str = "", filter_tag: str = None) -> list:
         """Lists all API resources.
 
         Args:
+            path (str, optional): Path the resource is located under. Default to "".
             filter_tag (str, optional): Filter by tag in format <key>=<value> or <key>. Defaults to None.
 
         Returns:
@@ -55,60 +56,64 @@ class CloudscaleBase:
         else:
             payload = None
 
-        result = self._client.get_resources(self.resource, payload=payload)
+        result = self._client.get_resources(self.resource + path, payload=payload)
         return self._process_response(result) or []
 
 
 class CloudscaleBaseExt(CloudscaleBase):
 
-    def get_by_uuid(self, uuid: str) -> dict:
+    def get_by_uuid(self, uuid: str, path: str = "") -> dict:
         """Queries an API resource by UUID.
 
         Args:
             uuid (str): UUID of the resource.
+            path (str, optional): Path the resource is located under. Default to "".
 
         Returns:
             dict: API data response.
         """
-        response = self._client.get_resources(self.resource, resource_id=uuid)
+        response = self._client.get_resources(self.resource + path, resource_id=uuid)
         return self._process_response(response)
 
 
 class CloudscaleMutable(CloudscaleBaseExt):
 
-    def delete(self, uuid: str) -> dict:
+    def delete(self, uuid: str, path: str = "") -> dict:
         """Deletes an API resource by UUID.
 
         Args:
             uuid (str): UUID of the resource.
+            path (str, optional): Path the resource is located under. Default to "".
 
         Returns:
             dict: API data response.
         """
-        response = self._client.delete_resource(self.resource, resource_id=uuid)
+        response = self._client.delete_resource(self.resource + path, resource_id=uuid)
         return self._process_response(response)
 
-    def update(self, uuid: str, payload: dict) -> dict:
+    def update(self, uuid: str, payload: dict, path: str = "") -> dict:
         """Updates an API resource by UUID.
 
         Args:
             uuid (str): UUID of the resource.
             payload (dict): API arguments.
+            path (str, optional): Path the resource is located under. Default to "".
 
         Returns:
             dict: API data response.
         """
-        response = self._client.post_patch_resource(self.resource, resource_id=uuid, payload=payload)
+        response = self._client.post_patch_resource(self.resource + path, resource_id=uuid, payload=payload)
         return self._process_response(response)
 
-    def create(self, payload: dict) -> dict:
+    def create(self, payload: dict, path: str = "") -> dict:
         """Creates an API resource.
 
         Args:
             payload (dict): API arguments.
+            path (str, optional): Path the resource is located under. Default to "".
 
         Returns:
             dict: API data response.
         """
-        response = self._client.post_patch_resource(self.resource, payload=payload)
+        response = self._client.post_patch_resource(self.resource + path, payload=payload)
         return self._process_response(response)

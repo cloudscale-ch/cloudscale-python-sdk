@@ -78,7 +78,7 @@ class CustomImage(CloudscaleMutable):
         payload = {
             'name': name,
             'slug': slug,
-            'user_data_handing': user_data_handling,
+            'user_data_handling': user_data_handling,
             'tags': tags,
         }
         return super().update(uuid=uuid, payload=payload)

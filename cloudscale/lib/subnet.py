@@ -1,20 +1,18 @@
+from typing import Optional
+
 from . import CloudscaleMutable
 
-class Subnet(CloudscaleMutable):
 
-    def __init__(self):
-        """Subnet
-        """
-        super().__init__()
-        self.resource = 'subnets'
+class Subnet(CloudscaleMutable):
+    resource = "subnets"
 
     def create(
         self,
         cidr: str,
         network_uuid: str,
-        gateway_address: str = None,
-        dns_servers: list = None,
-        tags: dict = None,
+        gateway_address: Optional[str] = None,
+        dns_servers: Optional[list] = None,
+        tags: Optional[dict] = None,
     ) -> dict:
         """Creates a subnet.
 
@@ -29,20 +27,20 @@ class Subnet(CloudscaleMutable):
             dict: API data response.
         """
         payload = {
-            'cidr': cidr,
-            'network': network_uuid,
-            'gateway_address': gateway_address,
-            'dns_servers': dns_servers,
-            'tags': tags,
+            "cidr": cidr,
+            "network": network_uuid,
+            "gateway_address": gateway_address,
+            "dns_servers": dns_servers,
+            "tags": tags,
         }
         return super().create(payload=payload)
 
     def update(
         self,
         uuid: str,
-        gateway_address: str = None,
-        dns_servers: list = None,
-        tags: dict = None,
+        gateway_address: Optional[str] = None,
+        dns_servers: Optional[list] = None,
+        tags: Optional[dict] = None,
     ) -> dict:
         """Updates a subnet.
 
@@ -56,8 +54,8 @@ class Subnet(CloudscaleMutable):
             dict: API data response.
         """
         payload = {
-            'gateway_address': gateway_address,
-            'dns_servers': dns_servers,
-            'tags': tags,
+            "gateway_address": gateway_address,
+            "dns_servers": dns_servers,
+            "tags": tags,
         }
         return super().update(uuid=uuid, payload=payload)

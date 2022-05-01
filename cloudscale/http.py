@@ -1,11 +1,15 @@
-import requests
+from typing import Optional
 from urllib.parse import urlencode
+
+import requests
+
 from .log import logger
 
 
 class RestAPIClient:
-
-    def __init__(self, api_url: str, api_token: str, user_agent: str, timeout: int = 60):
+    def __init__(
+        self, api_url: str, api_token: str, user_agent: str, timeout: int = 60
+    ):
         """Rest API Client
 
         Args:
@@ -18,12 +22,12 @@ class RestAPIClient:
         self.api_url = api_url
         self.timeout = timeout
         self.headers = {
-            'Authorization': f"Bearer {api_token}",
-            'Content-type': "application/json",
-            'User-Agent': user_agent,
+            "Authorization": f"Bearer {api_token}",
+            "Content-type": "application/json",
+            "User-Agent": user_agent,
         }
 
-    def _return_result(self, r: object) -> dict:
+    def _return_result(self, r: requests.Response) -> dict:
         """Parses results from Requests
 
         Args:
@@ -35,41 +39,29 @@ class RestAPIClient:
 
         logger.info(f"HTTP status code {r.status_code}")
         result = {
-            'status_code': r.status_code,
+            "status_code": r.status_code,
+            "data": dict(),
         }
 
         try:
-            result['data'] = r.json()
+            result["data"] = r.json()
         except ValueError:
-            result['data'] = None
+            pass
+
         return result
 
-    def _handle_payload(self, payload: dict) -> dict:
-        """ Filters payload
-
-        Args:
-            payload (dict): payload
-
-        Returns:
-            dict: payload
-        """
-        if not payload:
-            return
-
-        data = dict()
-        for k, v in payload.items():
-            if v is not None:
-                data[k] = v
-
-        logger.info(f"HTTP payload: {data}")
-        return data
-
-    def get_resources(self, resource: str, payload: dict = None, resource_id: str = None) -> dict:
+    def get_resources(
+        self,
+        resource: str,
+        payload: Optional[dict] = None,
+        resource_id: Optional[str] = None,
+    ) -> dict:
         query_url = f"{self.api_url}/{resource}"
         if resource_id:
             query_url = f"{query_url}/{resource_id}"
 
         if payload:
+            data = ""
             for k, v in payload.items():
                 if v is not None:
                     data = urlencode({k: v})
@@ -84,24 +76,40 @@ class RestAPIClient:
         r = requests.get(query_url, headers=self.headers, timeout=self.timeout)
         return self._return_result(r)
 
-    def post_patch_resource(self, resource: str, payload: dict = None, resource_id: str = None, action: str = None) -> dict:
-        data = self._handle_payload(payload)
+    def post_patch_resource(
+        self,
+        resource: str,
+        payload: Optional[dict] = None,
+        resource_id: Optional[str] = None,
+        action: Optional[str] = None,
+    ) -> dict:
+        if payload:
+            data = {k: v for k, v in payload.items() if v is not None}
+        else:
+            data = dict()
+
         query_url = f"{self.api_url}/{resource}"
 
         if not resource_id:
             logger.info(f"HTTP POST to {query_url}")
-            r = requests.post(query_url, json=data, headers=self.headers, timeout=self.timeout)
+            r = requests.post(
+                query_url, json=data, headers=self.headers, timeout=self.timeout
+            )
             return self._return_result(r)
 
         query_url += f"/{resource_id}"
         if action:
             query_url += f"/{action}"
             logger.info(f"HTTP POST to {query_url}")
-            r = requests.post(query_url, json=data, headers=self.headers, timeout=self.timeout)
+            r = requests.post(
+                query_url, json=data, headers=self.headers, timeout=self.timeout
+            )
             return self._return_result(r)
         else:
             logger.info(f"HTTP PATCH to {query_url}")
-            r = requests.patch(query_url, json=data, headers=self.headers, timeout=self.timeout)
+            r = requests.patch(
+                query_url, json=data, headers=self.headers, timeout=self.timeout
+            )
             return self._return_result(r)
 
     def delete_resource(self, resource: str, resource_id: str) -> dict:

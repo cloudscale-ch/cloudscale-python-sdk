@@ -1,20 +1,18 @@
+from typing import Optional
+
 from . import CloudscaleMutable
 
-class Network(CloudscaleMutable):
 
-    def __init__(self):
-        """Network
-        """
-        super().__init__()
-        self.resource = 'networks'
+class Network(CloudscaleMutable):
+    resource = "networks"
 
     def create(
         self,
         name: str,
-        zone: str = None,
-        mtu: int = None,
-        auto_create_ipv4_subnet: bool = None,
-        tags: dict = None,
+        zone: Optional[str] = None,
+        mtu: Optional[int] = None,
+        auto_create_ipv4_subnet: Optional[bool] = None,
+        tags: Optional[dict] = None,
     ) -> dict:
         """Creates a network.
 
@@ -29,20 +27,20 @@ class Network(CloudscaleMutable):
             dict: API data response.
         """
         payload = {
-            'name': name,
-            'zone': zone,
-            'mtu': mtu,
-            'auto_create_ipv4_subnet': auto_create_ipv4_subnet,
-            'tags': tags,
+            "name": name,
+            "zone": zone,
+            "mtu": mtu,
+            "auto_create_ipv4_subnet": auto_create_ipv4_subnet,
+            "tags": tags,
         }
         return super().create(payload=payload)
 
     def update(
         self,
         uuid: str,
-        name: str = None,
-        mtu: int = None,
-        tags: dict = None,
+        name: Optional[str] = None,
+        mtu: Optional[int] = None,
+        tags: Optional[dict] = None,
     ) -> dict:
         """Updates a network.
 
@@ -56,8 +54,8 @@ class Network(CloudscaleMutable):
             dict: API data response.
         """
         payload = {
-            'name': name,
-            'mtu': mtu,
-            'tags': tags,
+            "name": name,
+            "mtu": mtu,
+            "tags": tags,
         }
         return super().update(uuid=uuid, payload=payload)

@@ -1,21 +1,19 @@
+from typing import Optional
+
 from . import CloudscaleMutable
 
-class Volume(CloudscaleMutable):
 
-    def __init__(self):
-        """Volume
-        """
-        super(Volume, self).__init__()
-        self.resource = 'volumes'
+class Volume(CloudscaleMutable):
+    resource = "volumes"
 
     def create(
         self,
         name: str,
         server_uuids: list,
         size_gb: int,
-        volume_type: str = None,
-        zone: str = None,
-        tags: dict = None,
+        volume_type: Optional[str] = None,
+        zone: Optional[str] = None,
+        tags: Optional[dict] = None,
     ) -> dict:
         """Creates a Volume.
 
@@ -31,22 +29,22 @@ class Volume(CloudscaleMutable):
             dict: API data response.
         """
         payload = {
-            'name': name,
-            'server_uuids': server_uuids,
-            'size_gb': size_gb,
-            'type': volume_type,
-            'zone': zone,
-            'tags': tags,
+            "name": name,
+            "server_uuids": server_uuids,
+            "size_gb": size_gb,
+            "type": volume_type,
+            "zone": zone,
+            "tags": tags,
         }
         return super().create(payload=payload)
 
     def update(
         self,
         uuid: str,
-        name: str = None,
-        server_uuids: list = None,
-        size_gb: int = None,
-        tags: dict = None,
+        name: Optional[str] = None,
+        server_uuids: Optional[list] = None,
+        size_gb: Optional[int] = None,
+        tags: Optional[dict] = None,
     ) -> dict:
         """Updates a volume.
 
@@ -61,9 +59,9 @@ class Volume(CloudscaleMutable):
             dict: API data response.
         """
         payload = {
-            'name': name,
-            'server_uuids': server_uuids,
-            'size_gb': size_gb,
-            'tags': tags,
+            "name": name,
+            "server_uuids": server_uuids,
+            "size_gb": size_gb,
+            "tags": tags,
         }
         return super().update(uuid=uuid, payload=payload)

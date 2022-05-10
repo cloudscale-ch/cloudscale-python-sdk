@@ -1,36 +1,38 @@
-from ..error import CloudscaleApiException
+from typing import Optional
+
+from cloudscale.http import RestAPIClient
+
+from ..error import CloudscaleApiException, CloudscaleException  # noqa F401
+
 
 class CloudscaleBase:
 
-    def __init__(self):
-        """CloudscaleBase
+    resource: str = ""
+
+    def __init__(self, config):
         """
-        self._client = None
-        self.resource: str = None
-
-    def _process_response(self, response: dict) -> dict:
-        """Processes of HTTP response.
-
-        Args:
-            response (dict): HTTP response data.
-
-        Raises:
-            CloudscaleApiException: Raise if not HTTP 2xx.
-
-        Returns:
-            dict: JSON data object.
+        :param config: Cloudscale
+        :return self
         """
-        status_code = response.get('status_code')
-        data = response.get('data', dict())
+        self._client = RestAPIClient(
+            api_token=config.api_token,
+            api_url=config.api_url,
+            user_agent=f"cloudscale-sdk {config.version}",
+            timeout=config.timeout,
+        )
+
+    def _process_response(self, response: dict):
+        status_code: int = int(response.get("status_code"))
         if status_code not in (200, 201, 204):
+            data: dict = response.get("data", dict())
             raise CloudscaleApiException(
                 f"API Response Error ({status_code}): {data.get('detail', data)}",
                 response=response,
                 status_code=status_code,
             )
-        return data
+        return response.get("data")
 
-    def get_all(self, path: str = "", filter_tag: str = None) -> list:
+    def get_all(self, path: str = "", filter_tag: Optional[str] = None) -> list:
         """Lists all API resources.
 
         Args:
@@ -41,27 +43,25 @@ class CloudscaleBase:
             list: API data response.
         """
         if filter_tag is not None:
-            if '=' in filter_tag:
-                tag_key, tag_value = filter_tag.split('=')
+            if "=" in filter_tag:
+                tag_key, tag_value = filter_tag.split("=")
             else:
                 tag_key = filter_tag
                 tag_value = None
 
-            if not tag_key.startswith('tag:'):
-                tag_key = f'tag:{tag_key}'
+            if not tag_key.startswith("tag:"):
+                tag_key = f"tag:{tag_key}"
 
-            payload = {
-                tag_key: tag_value
-            }
+            payload = {tag_key: tag_value}
         else:
             payload = None
 
         result = self._client.get_resources(self.resource + path, payload=payload)
-        return self._process_response(result) or []
+
+        return self._process_response(result) or list()
 
 
 class CloudscaleBaseExt(CloudscaleBase):
-
     def get_by_uuid(self, uuid: str, path: str = "") -> dict:
         """Queries an API resource by UUID.
 
@@ -73,12 +73,11 @@ class CloudscaleBaseExt(CloudscaleBase):
             dict: API data response.
         """
         response = self._client.get_resources(self.resource + path, resource_id=uuid)
-        return self._process_response(response)
+        return self._process_response(response) or dict()
 
 
 class CloudscaleMutable(CloudscaleBaseExt):
-
-    def delete(self, uuid: str, path: str = "") -> dict:
+    def delete(self, uuid: str, path: str = ""):
         """Deletes an API resource by UUID.
 
         Args:
@@ -102,8 +101,10 @@ class CloudscaleMutable(CloudscaleBaseExt):
         Returns:
             dict: API data response.
         """
-        response = self._client.post_patch_resource(self.resource + path, resource_id=uuid, payload=payload)
-        return self._process_response(response)
+        response = self._client.post_patch_resource(
+            self.resource + path, resource_id=uuid, payload=payload
+        )
+        return self._process_response(response) or dict()
 
     def create(self, payload: dict, path: str = "") -> dict:
         """Creates an API resource.
@@ -115,5 +116,7 @@ class CloudscaleMutable(CloudscaleBaseExt):
         Returns:
             dict: API data response.
         """
-        response = self._client.post_patch_resource(self.resource + path, payload=payload)
-        return self._process_response(response)
+        response = self._client.post_patch_resource(
+            self.resource + path, payload=payload
+        )
+        return self._process_response(response) or dict()

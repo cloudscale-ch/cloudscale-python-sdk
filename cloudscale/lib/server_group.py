@@ -1,18 +1,16 @@
+from typing import Optional
+
 from . import CloudscaleMutable
 
-class ServerGroup(CloudscaleMutable):
 
-    def __init__(self):
-        """Server Group
-        """
-        super().__init__()
-        self.resource = 'server-groups'
+class ServerGroup(CloudscaleMutable):
+    resource = "server-groups"
 
     def create(
         self,
         name: str,
-        group_type: str = None,
-        tags: dict = None,
+        group_type: Optional[str] = None,
+        tags: Optional[dict] = None,
     ) -> dict:
         """Creates a server group.
 
@@ -25,17 +23,17 @@ class ServerGroup(CloudscaleMutable):
             dict: API data response.
         """
         payload = {
-            'name': name,
-            'type': group_type,
-            'tags': tags,
+            "name": name,
+            "type": group_type,
+            "tags": tags,
         }
         return super().create(payload=payload)
 
     def update(
         self,
         uuid: str,
-        name: str = None,
-        tags: dict = None,
+        name: Optional[str] = None,
+        tags: Optional[dict] = None,
     ) -> dict:
         """Updates a server group.
 
@@ -47,7 +45,7 @@ class ServerGroup(CloudscaleMutable):
             dict: API data response.
         """
         payload = {
-            'name': name,
-            'tags': tags,
+            "name": name,
+            "tags": tags,
         }
         return super().update(uuid=uuid, payload=payload)

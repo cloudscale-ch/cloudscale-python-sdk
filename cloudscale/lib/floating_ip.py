@@ -1,22 +1,20 @@
+from typing import Optional
+
 from . import CloudscaleMutable
 
-class FloatingIp(CloudscaleMutable):
 
-    def __init__(self):
-        """Floating IP
-        """
-        super(FloatingIp, self).__init__()
-        self.resource = 'floating-ips'
+class FloatingIp(CloudscaleMutable):
+    resource = "floating-ips"
 
     def create(
         self,
         ip_version: int,
-        prefix_length: int = None,
-        reverse_ptr: str = None,
-        server_uuid: str = None,
-        scope: str = None,
-        region: str = None,
-        tags: dict = None,
+        prefix_length: Optional[int] = None,
+        reverse_ptr: Optional[str] = None,
+        server_uuid: Optional[str] = None,
+        scope: Optional[str] = None,
+        region: Optional[str] = None,
+        tags: Optional[dict] = None,
     ) -> dict:
         """Creates a floating IP.
 
@@ -32,22 +30,22 @@ class FloatingIp(CloudscaleMutable):
             dict: API data response.
         """
         payload = {
-            'ip_version': ip_version,
-            'prefix_length': prefix_length,
-            'reverse_ptr': reverse_ptr,
-            'server': server_uuid,
-            'type': scope,
-            'region': region,
-            'tags': tags,
+            "ip_version": ip_version,
+            "prefix_length": prefix_length,
+            "reverse_ptr": reverse_ptr,
+            "server": server_uuid,
+            "type": scope,
+            "region": region,
+            "tags": tags,
         }
         return super().create(payload=payload)
 
     def update(
         self,
         uuid: str,
-        reverse_ptr: str = None,
-        server_uuid: str = None,
-        tags: dict = None,
+        reverse_ptr: Optional[str] = None,
+        server_uuid: Optional[str] = None,
+        tags: Optional[dict] = None,
     ) -> dict:
         """Updates a floating IP.
 
@@ -61,8 +59,8 @@ class FloatingIp(CloudscaleMutable):
             dict: API data response.
         """
         payload = {
-            'reverse_ptr': reverse_ptr,
-            'server': server_uuid,
-            'tags': tags,
+            "reverse_ptr": reverse_ptr,
+            "server": server_uuid,
+            "tags": tags,
         }
         return super().update(uuid=uuid, payload=payload)

@@ -3,6 +3,7 @@
 ![status](https://img.shields.io/pypi/status/cloudscale-sdk.svg)
 [![pypi version](https://img.shields.io/pypi/v/cloudscale-sdk.svg)](https://pypi.org/project/cloudscale-sdk/)
 ![PyPI - Downloads](https://img.shields.io/pypi/dw/cloudscale-sdk)
+[![Codecov](https://img.shields.io/codecov/c/github/cloudscale-ch/cloudscale-python-sdk)](https://codecov.io/gh/cloudscale-ch/cloudscale-python-sdk)
 
 # Python SDK for cloudscale.ch
 

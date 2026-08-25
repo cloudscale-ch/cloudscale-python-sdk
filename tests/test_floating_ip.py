@@ -1,15 +1,16 @@
-import responses
-from cloudscale import (
-    CLOUDSCALE_API_URL,
-    Cloudscale,
-    CloudscaleApiException,
-    CloudscaleException,
-)
+import pytest
+import responses as responses_module
+
+from cloudscale import CloudscaleApiException
+
+from .conftest import API_URL
+
+NETWORK_ID = "192.0.2.123"
 
 FLOATING_IP_RESP = {
-    "href": "https://api.cloudscale.ch/v1/floating-ips/192.0.2.123",
+    "href": f"https://api.cloudscale.ch/v1/floating-ips/{NETWORK_ID}",
     "created_at": "2019-05-29T13:18:42.505197Z",
-    "network": "192.0.2.123/32",
+    "network": f"{NETWORK_ID}/32",
     "ip_version": 4,
     "server": {
         "href": "https://api.cloudscale.ch/v1/servers/47cec963-fcd2-482f-bdb6-24461b2d47b1",
@@ -23,177 +24,103 @@ FLOATING_IP_RESP = {
 }
 
 
-@responses.activate
-def test_floating_ip_get_all():
-    network_id = "192.0.2.123"
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/floating-ips",
-        json=[FLOATING_IP_RESP],
-        status=200,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/floating-ips",
-        json=[FLOATING_IP_RESP],
-        status=200,
-    )
-    responses.add(
-        responses.GET, CLOUDSCALE_API_URL + "/floating-ips", json={}, status=500
-    )
+def test_floating_ip_get_all(responses, cloudscale):
+    responses.get(f"{API_URL}/floating-ips", json=[FLOATING_IP_RESP], status=200)
 
-    cloudscale = Cloudscale(api_token="token")
     floating_ips = cloudscale.floating_ip.get_all()
-    assert floating_ips[0]["network"] == network_id + "/32"
+    assert floating_ips[0]["network"] == f"{NETWORK_ID}/32"
+    assert floating_ips[0]["ip_version"] == 4
 
 
-@responses.activate
-def test_floating_ip_get_by_uuid():
-    network_id = "192.0.2.123"
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/floating-ips/" + network_id,
-        json=FLOATING_IP_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/floating-ips/" + network_id,
-        json=FLOATING_IP_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/floating-ips/" + network_id,
-        json={},
-        status=500,
+def test_floating_ip_get_by_uuid(responses, cloudscale):
+    responses.get(
+        f"{API_URL}/floating-ips/{NETWORK_ID}", json=FLOATING_IP_RESP, status=200
     )
 
-    cloudscale = Cloudscale(api_token="token")
-    floating_ip = cloudscale.floating_ip.get_by_uuid(uuid=network_id)
-    assert floating_ip["network"] == network_id + "/32"
+    floating_ip = cloudscale.floating_ip.get_by_uuid(uuid=NETWORK_ID)
+    assert floating_ip["network"] == f"{NETWORK_ID}/32"
 
 
-@responses.activate
-def test_floating_ip_delete():
-    network_id = "192.0.2.123"
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/floating-ips/" + network_id,
-        json=FLOATING_IP_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/floating-ips/unknown",
-        json=FLOATING_IP_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.DELETE, CLOUDSCALE_API_URL + "/floating-ips/" + network_id, status=204
-    )
-    responses.add(
-        responses.DELETE,
-        CLOUDSCALE_API_URL + "/floating-ips/unknown",
-        json={"detail": "Not found."},
-        status=404,
+def test_floating_ip_get_by_uuid_not_found(responses, cloudscale):
+    responses.get(
+        f"{API_URL}/floating-ips/unknown", json={"detail": "Not found."}, status=404
     )
 
-    cloudscale = Cloudscale(api_token="token")
-    floating_ip = cloudscale.floating_ip.delete(uuid=network_id)
-    assert not floating_ip
-
-    try:
-        cloudscale = Cloudscale(api_token="token")
-        cloudscale.floating_ip.delete(uuid="unknown")
-    except CloudscaleApiException as e:
-        assert e.status_code == 404
-
-
-@responses.activate
-def test_floating_ip_create():
-    ip_version = 4
-    server_uuid = "47cec963-fcd2-482f-bdb6-24461b2d47b1"
-    responses.add(
-        responses.POST,
-        CLOUDSCALE_API_URL + "/floating-ips",
-        json=FLOATING_IP_RESP,
-        status=201,
-    )
-    responses.add(
-        responses.POST,
-        CLOUDSCALE_API_URL + "/floating-ips",
-        json=FLOATING_IP_RESP,
-        status=201,
-    )
-    responses.add(
-        responses.POST,
-        CLOUDSCALE_API_URL + "/floating-ips",
-        json=FLOATING_IP_RESP,
-        status=500,
-    )
-
-    cloudscale = Cloudscale(api_token="token")
-    cloudscale.floating_ip.create(
-        ip_version=ip_version,
-    )
-
-
-@responses.activate
-def test_floating_ip_update():
-    network_id = "192.0.2.123"
-    reverse_ptr = "192.0.2.123.cust.cloudscale.ch"
-    responses.add(
-        responses.PATCH,
-        CLOUDSCALE_API_URL + "/floating-ips/" + network_id,
-        json=FLOATING_IP_RESP,
-        status=204,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/floating-ips/" + network_id,
-        json=FLOATING_IP_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.PATCH,
-        CLOUDSCALE_API_URL + "/floating-ips/" + network_id,
-        json=FLOATING_IP_RESP,
-        status=204,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/floating-ips/" + network_id,
-        json=FLOATING_IP_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.PATCH,
-        CLOUDSCALE_API_URL + "/floating-ips/" + network_id,
-        json={},
-        status=500,
-    )
-
-    cloudscale = Cloudscale(api_token="token")
-    floating_ip = cloudscale.floating_ip.update(
-        uuid=network_id, reverse_ptr=reverse_ptr
-    )
-    assert floating_ip["network"] == network_id + "/32"
-    assert floating_ip["reverse_ptr"] == reverse_ptr
-
-
-@responses.activate
-def test_floating_ip_get_by_uuid_not_found():
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/floating-ips/unknown",
-        json={"detail": "Not found."},
-        status=404,
-    )
-    try:
-        cloudscale = Cloudscale(api_token="token")
+    with pytest.raises(CloudscaleApiException) as exc_info:
         cloudscale.floating_ip.get_by_uuid(uuid="unknown")
-    except CloudscaleApiException as e:
-        assert e.status_code == 404
-        assert str(e) == "API Response Error (404): Not found."
-        assert e.response == {"data": {"detail": "Not found."}, "status_code": 404}
+
+    assert exc_info.value.status_code == 404
+
+
+def test_floating_ip_delete(responses, cloudscale):
+    responses.delete(f"{API_URL}/floating-ips/{NETWORK_ID}", status=204)
+
+    assert not cloudscale.floating_ip.delete(uuid=NETWORK_ID)
+
+
+def test_floating_ip_create(responses, cloudscale):
+    responses.post(
+        f"{API_URL}/floating-ips",
+        json=FLOATING_IP_RESP,
+        status=201,
+        match=[
+            responses_module.matchers.json_params_matcher(
+                {
+                    "ip_version": 4,
+                    "prefix_length": 32,
+                    "reverse_ptr": "192.0.2.123.cust.cloudscale.ch",
+                    "server": "47cec963-fcd2-482f-bdb6-24461b2d47b1",
+                    "type": "regional",
+                    "region": "lpg",
+                    "tags": {"project": "apollo"},
+                }
+            )
+        ],
+    )
+
+    floating_ip = cloudscale.floating_ip.create(
+        ip_version=4,
+        prefix_length=32,
+        reverse_ptr="192.0.2.123.cust.cloudscale.ch",
+        server_uuid="47cec963-fcd2-482f-bdb6-24461b2d47b1",
+        scope="regional",
+        region="lpg",
+        tags={"project": "apollo"},
+    )
+    assert floating_ip["ip_version"] == 4
+
+
+def test_floating_ip_create_error(responses, cloudscale):
+    responses.post(
+        f"{API_URL}/floating-ips", json={"detail": "Bad request."}, status=400
+    )
+
+    with pytest.raises(CloudscaleApiException) as exc_info:
+        cloudscale.floating_ip.create(ip_version=4)
+
+    assert exc_info.value.status_code == 400
+
+
+def test_floating_ip_update(responses, cloudscale):
+    responses.patch(
+        f"{API_URL}/floating-ips/{NETWORK_ID}",
+        json=FLOATING_IP_RESP,
+        status=200,
+        match=[
+            responses_module.matchers.json_params_matcher(
+                {
+                    "reverse_ptr": "192.0.2.123.cust.cloudscale.ch",
+                    "server": "47cec963-fcd2-482f-bdb6-24461b2d47b1",
+                    "tags": {},
+                }
+            )
+        ],
+    )
+
+    floating_ip = cloudscale.floating_ip.update(
+        uuid=NETWORK_ID,
+        reverse_ptr="192.0.2.123.cust.cloudscale.ch",
+        server_uuid="47cec963-fcd2-482f-bdb6-24461b2d47b1",
+        tags={},
+    )
+    assert floating_ip["network"] == f"{NETWORK_ID}/32"

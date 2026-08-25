@@ -1,13 +1,20 @@
-import responses
-from cloudscale import CLOUDSCALE_API_URL, Cloudscale, CloudscaleApiException
+import pytest
+import responses as responses_module
+
+from cloudscale import CloudscaleApiException
+
+from .conftest import API_URL
+
+UUID = "33333333-1864-4608-853a-0771b6885a3a"
+NETWORK_UUID = "2db69ba3-1864-4608-853a-0771b6885a3a"
 
 SUBNET_RESP = {
-    "href": "https://api.cloudscale.ch/v1/subnets/33333333-1864-4608-853a-0771b6885a3a",
-    "uuid": "33333333-1864-4608-853a-0771b6885a3a",
+    "href": f"https://api.cloudscale.ch/v1/subnets/{UUID}",
+    "uuid": UUID,
     "cidr": "192.0.2.123/24",
     "network": {
-        "href": "https://api.cloudscale.ch/v1/networks/2db69ba3-1864-4608-853a-0771b6885a3a",
-        "uuid": "2db69ba3-1864-4608-853a-0771b6885a3a",
+        "href": f"https://api.cloudscale.ch/v1/networks/{NETWORK_UUID}",
+        "uuid": NETWORK_UUID,
         "name": "my-network-name",
     },
     "gateway_address": None,
@@ -16,133 +23,86 @@ SUBNET_RESP = {
 }
 
 
-@responses.activate
-def test_subnet_get_all():
-    uuid = "33333333-1864-4608-853a-0771b6885a3a"
-    responses.add(
-        responses.GET, CLOUDSCALE_API_URL + "/subnets", json=[SUBNET_RESP], status=200
-    )
-    responses.add(
-        responses.GET, CLOUDSCALE_API_URL + "/subnets", json=[SUBNET_RESP], status=200
-    )
-    responses.add(responses.GET, CLOUDSCALE_API_URL + "/subnets", json={}, status=500)
+def test_subnet_get_all(responses, cloudscale):
+    responses.get(f"{API_URL}/subnets", json=[SUBNET_RESP], status=200)
 
-    cloudscale = Cloudscale(api_token="token")
     subnets = cloudscale.subnet.get_all()
-    assert subnets[0]["uuid"] == uuid
+    assert subnets[0]["cidr"] == "192.0.2.123/24"
+    assert subnets[0]["uuid"] == UUID
 
 
-@responses.activate
-def test_subnet_get_by_uuid():
-    uuid = "33333333-1864-4608-853a-0771b6885a3a"
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/subnets/" + uuid,
-        json=SUBNET_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/subnets/" + uuid,
-        json=SUBNET_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.GET, CLOUDSCALE_API_URL + "/subnets/" + uuid, json={}, status=500
-    )
+def test_subnet_get_by_uuid(responses, cloudscale):
+    responses.get(f"{API_URL}/subnets/{UUID}", json=SUBNET_RESP, status=200)
 
-    cloudscale = Cloudscale(api_token="token")
-    subnet = cloudscale.subnet.get_by_uuid(uuid=uuid)
-    assert subnet["uuid"] == uuid
+    subnet = cloudscale.subnet.get_by_uuid(uuid=UUID)
+    assert subnet["uuid"] == UUID
 
 
-@responses.activate
-def test_subnet_delete():
-    uuid = "33333333-1864-4608-853a-0771b6885a3a"
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/subnets/" + uuid,
-        json=SUBNET_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/subnets/unknown",
-        json=SUBNET_RESP,
-        status=200,
-    )
-    responses.add(responses.DELETE, CLOUDSCALE_API_URL + "/subnets/" + uuid, status=204)
-    responses.add(
-        responses.DELETE,
-        CLOUDSCALE_API_URL + "/subnets/unknown",
-        json={"detail": "Not found."},
-        status=404,
+def test_subnet_delete(responses, cloudscale):
+    responses.delete(f"{API_URL}/subnets/{UUID}", status=204)
+
+    assert not cloudscale.subnet.delete(uuid=UUID)
+
+
+def test_subnet_delete_not_found(responses, cloudscale):
+    responses.delete(
+        f"{API_URL}/subnets/unknown", json={"detail": "Not found."}, status=404
     )
 
-    cloudscale = Cloudscale(api_token="token")
-    subnet = cloudscale.subnet.delete(uuid=uuid)
-    assert not subnet
-
-    try:
-        cloudscale = Cloudscale(api_token="token")
+    with pytest.raises(CloudscaleApiException) as exc_info:
         cloudscale.subnet.delete(uuid="unknown")
-    except CloudscaleApiException as e:
-        assert e.status_code == 404
+
+    assert exc_info.value.status_code == 404
 
 
-@responses.activate
-def test_subnet_create():
-    responses.add(
-        responses.POST, CLOUDSCALE_API_URL + "/subnets", json=SUBNET_RESP, status=201
-    )
-    responses.add(
-        responses.POST, CLOUDSCALE_API_URL + "/subnets", json=SUBNET_RESP, status=201
-    )
-    responses.add(
-        responses.POST, CLOUDSCALE_API_URL + "/subnets", json=SUBNET_RESP, status=500
+def test_subnet_create(responses, cloudscale):
+    responses.post(
+        f"{API_URL}/subnets",
+        json=SUBNET_RESP,
+        status=201,
+        match=[
+            responses_module.matchers.json_params_matcher(
+                {
+                    "cidr": "192.0.2.123/24",
+                    "network": NETWORK_UUID,
+                    "gateway_address": "192.0.2.1",
+                    "dns_servers": ["185.79.232.101"],
+                    "tags": {"project": "apollo"},
+                }
+            )
+        ],
     )
 
-    cloudscale = Cloudscale(api_token="token")
-    cloudscale.subnet.create(
+    subnet = cloudscale.subnet.create(
         cidr="192.0.2.123/24",
-        network_uuid="2db69ba3-1864-4608-853a-0771b6885a3a",
+        network_uuid=NETWORK_UUID,
+        gateway_address="192.0.2.1",
+        dns_servers=["185.79.232.101"],
+        tags={"project": "apollo"},
+    )
+    assert subnet["uuid"] == UUID
+
+
+def test_subnet_update(responses, cloudscale):
+    responses.patch(
+        f"{API_URL}/subnets/{UUID}",
+        json=SUBNET_RESP,
+        status=200,
+        match=[
+            responses_module.matchers.json_params_matcher(
+                {
+                    "gateway_address": "192.0.2.1",
+                    "dns_servers": ["185.79.232.101", "185.79.232.102"],
+                    "tags": {},
+                }
+            )
+        ],
+    )
+
+    subnet = cloudscale.subnet.update(
+        uuid=UUID,
+        gateway_address="192.0.2.1",
         dns_servers=["185.79.232.101", "185.79.232.102"],
+        tags={},
     )
-
-
-@responses.activate
-def test_subnet_update():
-    uuid = "33333333-1864-4608-853a-0771b6885a3a"
-    dns_servers = ["185.79.232.101", "185.79.232.102"]
-
-    responses.add(
-        responses.PATCH,
-        CLOUDSCALE_API_URL + "/subnets/" + uuid,
-        json=SUBNET_RESP,
-        status=204,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/subnets/" + uuid,
-        json=SUBNET_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.PATCH,
-        CLOUDSCALE_API_URL + "/subnets/" + uuid,
-        json=SUBNET_RESP,
-        status=204,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/subnets/" + uuid,
-        json=SUBNET_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.PATCH, CLOUDSCALE_API_URL + "/subnets/" + uuid, json={}, status=500
-    )
-    cloudscale = Cloudscale(api_token="token")
-    subnet = cloudscale.subnet.update(uuid=uuid, dns_servers=dns_servers)
-    assert subnet["uuid"] == uuid
-    assert subnet["dns_servers"] == dns_servers
+    assert subnet["uuid"] == UUID

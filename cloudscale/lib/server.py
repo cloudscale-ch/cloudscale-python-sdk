@@ -1,6 +1,4 @@
-from typing import Optional
-
-from . import CloudscaleMutable
+from .base import CloudscaleMutable
 
 
 class Server(CloudscaleMutable):
@@ -11,18 +9,18 @@ class Server(CloudscaleMutable):
         name: str,
         flavor: str,
         image: str,
-        zone: Optional[str] = None,
-        volume_size: Optional[int] = None,
-        volumes: Optional[list] = None,
-        interfaces: Optional[list] = None,
-        ssh_keys: Optional[list] = None,
-        password: Optional[str] = None,
-        use_public_network: Optional[bool] = None,
-        use_private_network: Optional[bool] = None,
-        use_ipv6: Optional[bool] = None,
-        server_groups: Optional[list] = None,
-        user_data: Optional[str] = None,
-        tags: Optional[dict] = None,
+        zone: str | None = None,
+        volume_size: int | None = None,
+        volumes: list | None = None,
+        interfaces: list | None = None,
+        ssh_keys: list | None = None,
+        password: str | None = None,
+        use_public_network: bool | None = None,
+        use_private_network: bool | None = None,
+        use_ipv6: bool | None = None,
+        server_groups: list | None = None,
+        user_data: str | None = None,
+        tags: dict | None = None,
     ) -> dict:
         """Creates a server.
 
@@ -67,10 +65,10 @@ class Server(CloudscaleMutable):
     def update(
         self,
         uuid: str,
-        name: Optional[str] = None,
-        flavor: Optional[str] = None,
-        interfaces: Optional[dict] = None,
-        tags: Optional[dict] = None,
+        name: str | None = None,
+        flavor: str | None = None,
+        interfaces: dict | None = None,
+        tags: dict | None = None,
     ) -> dict:
         """Updates a server.
 
@@ -104,7 +102,7 @@ class Server(CloudscaleMutable):
         result = self._client.post_patch_resource(
             self.resource, resource_id=uuid, action="start"
         )
-        return self._process_response(result) or dict()
+        return self._process_response(result) or {}
 
     def stop(self, uuid: str) -> dict:
         """Stops a server.
@@ -118,7 +116,7 @@ class Server(CloudscaleMutable):
         result = self._client.post_patch_resource(
             self.resource, resource_id=uuid, action="stop"
         )
-        return self._process_response(result) or dict()
+        return self._process_response(result) or {}
 
     def reboot(self, uuid: str) -> dict:
         """Reboots a server.
@@ -132,4 +130,4 @@ class Server(CloudscaleMutable):
         result = self._client.post_patch_resource(
             self.resource, resource_id=uuid, action="reboot"
         )
-        return self._process_response(result) or dict()
+        return self._process_response(result) or {}

@@ -1,6 +1,4 @@
-from typing import Optional
-
-from . import CloudscaleMutable
+from .base import CloudscaleMutable
 
 
 class FloatingIp(CloudscaleMutable):
@@ -9,12 +7,12 @@ class FloatingIp(CloudscaleMutable):
     def create(
         self,
         ip_version: int,
-        prefix_length: Optional[int] = None,
-        reverse_ptr: Optional[str] = None,
-        server_uuid: Optional[str] = None,
-        scope: Optional[str] = None,
-        region: Optional[str] = None,
-        tags: Optional[dict] = None,
+        prefix_length: int | None = None,
+        reverse_ptr: str | None = None,
+        server_uuid: str | None = None,
+        scope: str | None = None,
+        region: str | None = None,
+        tags: dict | None = None,
     ) -> dict:
         """Creates a floating IP.
 
@@ -43,9 +41,9 @@ class FloatingIp(CloudscaleMutable):
     def update(
         self,
         uuid: str,
-        reverse_ptr: Optional[str] = None,
-        server_uuid: Optional[str] = None,
-        tags: Optional[dict] = None,
+        reverse_ptr: str | None = None,
+        server_uuid: str | None = None,
+        tags: dict | None = None,
     ) -> dict:
         """Updates a floating IP.
 

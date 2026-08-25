@@ -1,6 +1,4 @@
-from typing import Optional
-
-from . import CloudscaleMutable
+from .base import CloudscaleMutable
 
 
 class ServerGroup(CloudscaleMutable):
@@ -9,8 +7,8 @@ class ServerGroup(CloudscaleMutable):
     def create(
         self,
         name: str,
-        group_type: Optional[str] = None,
-        tags: Optional[dict] = None,
+        group_type: str | None = None,
+        tags: dict | None = None,
     ) -> dict:
         """Creates a server group.
 
@@ -32,8 +30,8 @@ class ServerGroup(CloudscaleMutable):
     def update(
         self,
         uuid: str,
-        name: Optional[str] = None,
-        tags: Optional[dict] = None,
+        name: str | None = None,
+        tags: dict | None = None,
     ) -> dict:
         """Updates a server group.
 

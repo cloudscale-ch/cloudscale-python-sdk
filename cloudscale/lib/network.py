@@ -1,6 +1,4 @@
-from typing import Optional
-
-from . import CloudscaleMutable
+from .base import CloudscaleMutable
 
 
 class Network(CloudscaleMutable):
@@ -9,10 +7,10 @@ class Network(CloudscaleMutable):
     def create(
         self,
         name: str,
-        zone: Optional[str] = None,
-        mtu: Optional[int] = None,
-        auto_create_ipv4_subnet: Optional[bool] = None,
-        tags: Optional[dict] = None,
+        zone: str | None = None,
+        mtu: int | None = None,
+        auto_create_ipv4_subnet: bool | None = None,
+        tags: dict | None = None,
     ) -> dict:
         """Creates a network.
 
@@ -38,9 +36,9 @@ class Network(CloudscaleMutable):
     def update(
         self,
         uuid: str,
-        name: Optional[str] = None,
-        mtu: Optional[int] = None,
-        tags: Optional[dict] = None,
+        name: str | None = None,
+        mtu: int | None = None,
+        tags: dict | None = None,
     ) -> dict:
         """Updates a network.
 

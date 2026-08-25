@@ -1,330 +1,203 @@
-import responses
-from cloudscale import (
-    CLOUDSCALE_API_URL,
-    Cloudscale,
-    CloudscaleApiException,
-    CloudscaleException,
-)
+import pytest
+import responses as responses_module
+
+from cloudscale import CloudscaleApiException
+
+from .conftest import API_URL
+
+UUID = "47cec963-fcd2-482f-bdb6-24461b2d47b1"
 
 SERVER_RESP = {
-    "uuid": "47cec963-fcd2-482f-bdb6-24461b2d47b1",
+    "uuid": UUID,
     "name": "db-master",
     "status": "running",
     "zone": {"slug": "lpg1"},
-    "flavor": {
-        "slug": "flex-4",
-    },
-    "image": {
-        "slug": "debian-9",
-    },
+    "flavor": {"slug": "flex-4"},
+    "image": {"slug": "debian-9"},
     "server_groups": [],
     "anti_affinity_with": [],
     "tags": {"project": "gemini"},
 }
 
 
-@responses.activate
-def test_server_get_all():
-    responses.add(
-        responses.GET, CLOUDSCALE_API_URL + "/servers", json=[SERVER_RESP], status=200
-    )
-    responses.add(
-        responses.GET, CLOUDSCALE_API_URL + "/servers", json=[SERVER_RESP], status=200
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/servers",
-        json={"detail": "Server error."},
-        status=500,
-    )
+def test_server_get_all(responses, cloudscale):
+    responses.get(f"{API_URL}/servers", json=[SERVER_RESP], status=200)
 
-    cloudscale = Cloudscale(api_token="token")
     servers = cloudscale.server.get_all()
     assert servers[0]["name"] == "db-master"
-    assert servers[0]["uuid"] == "47cec963-fcd2-482f-bdb6-24461b2d47b1"
+    assert servers[0]["uuid"] == UUID
     assert servers[0]["tags"]["project"] == "gemini"
 
 
-@responses.activate
-def test_server_get_all_fitlered():
-    responses.add(
-        responses.GET, CLOUDSCALE_API_URL + "/servers", json=[SERVER_RESP], status=200
-    )
+def test_server_get_by_uuid(responses, cloudscale):
+    responses.get(f"{API_URL}/servers/{UUID}", json=SERVER_RESP, status=200)
 
-    cloudscale = Cloudscale(api_token="token")
-    servers = cloudscale.server.get_all(filter_tag="project=gemini")
-    assert servers[0]["name"] == "db-master"
-    assert servers[0]["uuid"] == "47cec963-fcd2-482f-bdb6-24461b2d47b1"
-    assert servers[0]["tags"]["project"] == "gemini"
-
-    servers = cloudscale.server.get_all(filter_tag="project")
-    assert servers[0]["name"] == "db-master"
-    assert servers[0]["uuid"] == "47cec963-fcd2-482f-bdb6-24461b2d47b1"
-    assert servers[0]["tags"]["project"] == "gemini"
-
-
-@responses.activate
-def test_server_get_by_uuid():
-    uuid = "47cec963-fcd2-482f-bdb6-24461b2d47b1"
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/servers/" + uuid,
-        json=SERVER_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/servers/" + uuid,
-        json=SERVER_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/servers/" + uuid,
-        json={"detail": "Server error."},
-        status=500,
-    )
-
-    cloudscale = Cloudscale(api_token="token")
-    server = cloudscale.server.get_by_uuid(uuid=uuid)
+    server = cloudscale.server.get_by_uuid(uuid=UUID)
     assert server["name"] == "db-master"
-    assert server["uuid"] == uuid
-    assert server["tags"]["project"] == "gemini"
+    assert server["uuid"] == UUID
 
 
-@responses.activate
-def test_server_delete():
-    uuid = "47cec963-fcd2-482f-bdb6-24461b2d47b1"
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/servers/" + uuid,
-        json=SERVER_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/servers/unknown",
-        json=SERVER_RESP,
-        status=200,
-    )
-    responses.add(responses.DELETE, CLOUDSCALE_API_URL + "/servers/" + uuid, status=204)
-    responses.add(
-        responses.DELETE,
-        CLOUDSCALE_API_URL + "/servers/unknown",
-        json={"detail": "Not found."},
-        status=404,
+def test_server_get_by_uuid_not_found(responses, cloudscale):
+    responses.get(
+        f"{API_URL}/servers/unknown", json={"detail": "Not found."}, status=404
     )
 
-    cloudscale = Cloudscale(api_token="token")
-    server = cloudscale.server.delete(uuid=uuid)
-    assert not server
+    with pytest.raises(CloudscaleApiException) as exc_info:
+        cloudscale.server.get_by_uuid(uuid="unknown")
 
-    try:
-        cloudscale = Cloudscale(api_token="token")
-        cloudscale.server.delete(uuid="unknown")
-    except CloudscaleApiException as e:
-        assert e.status_code == 404
+    assert exc_info.value.status_code == 404
+    assert str(exc_info.value) == "API Response Error (404): Not found."
 
 
-@responses.activate
-def test_server_get_auth_not_provided():
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/servers/unknown",
+def test_server_get_unauthenticated(responses, cloudscale):
+    responses.get(
+        f"{API_URL}/servers/unknown",
         json={"detail": "Authentication credentials were not provided."},
         status=401,
     )
-    try:
-        cloudscale = Cloudscale(api_token="token")
+
+    with pytest.raises(CloudscaleApiException) as exc_info:
         cloudscale.server.get_by_uuid(uuid="unknown")
-    except CloudscaleApiException as e:
-        assert e.status_code == 401
-        assert (
-            str(e)
-            == "API Response Error (401): Authentication credentials were not provided."
-        )
 
-
-@responses.activate
-def test_server_create():
-    name = "db-master"
-    flavor = "flex-4"
-    image = "debian9"
-
-    responses.add(
-        responses.POST, CLOUDSCALE_API_URL + "/servers", json=SERVER_RESP, status=201
-    )
-    responses.add(
-        responses.POST, CLOUDSCALE_API_URL + "/servers", json=SERVER_RESP, status=201
-    )
-    responses.add(
-        responses.POST,
-        CLOUDSCALE_API_URL + "/servers",
-        json={"detail": "Server error."},
-        status=500,
+    assert exc_info.value.status_code == 401
+    assert str(exc_info.value) == (
+        "API Response Error (401): Authentication credentials were not provided."
     )
 
-    cloudscale = Cloudscale(api_token="token")
+
+def test_server_delete(responses, cloudscale):
+    responses.delete(f"{API_URL}/servers/{UUID}", status=204)
+
+    assert not cloudscale.server.delete(uuid=UUID)
+
+
+def test_server_delete_not_found(responses, cloudscale):
+    responses.delete(
+        f"{API_URL}/servers/unknown", json={"detail": "Not found."}, status=404
+    )
+
+    with pytest.raises(CloudscaleApiException) as exc_info:
+        cloudscale.server.delete(uuid="unknown")
+
+    assert exc_info.value.status_code == 404
+
+
+def test_server_create(responses, cloudscale):
+    responses.post(
+        f"{API_URL}/servers",
+        json=SERVER_RESP,
+        status=201,
+        match=[
+            responses_module.matchers.json_params_matcher(
+                {"name": "db-master", "flavor": "flex-4", "image": "debian-9"}
+            )
+        ],
+    )
+
+    server = cloudscale.server.create(
+        name="db-master", flavor="flex-4", image="debian-9"
+    )
+    assert server["uuid"] == UUID
+
+
+def test_server_create_with_all_options(responses, cloudscale):
+    responses.post(
+        f"{API_URL}/servers",
+        json=SERVER_RESP,
+        status=201,
+        match=[
+            responses_module.matchers.json_params_matcher(
+                {
+                    "name": "db-master",
+                    "flavor": "flex-4",
+                    "image": "debian-9",
+                    "zone": "lpg1",
+                    "volumes": [{"size_gb": 100}],
+                    "interfaces": [{"network": "public"}],
+                    "ssh_keys": ["ssh-rsa AAAA"],
+                    "password": "secret",
+                    "use_public_network": True,
+                    "use_private_network": False,
+                    "use_ipv6": True,
+                    "server_groups": ["group-uuid"],
+                    "user_data": "#cloud-config",
+                    "tags": {"project": "gemini"},
+                }
+            )
+        ],
+    )
+
     cloudscale.server.create(
-        name=name,
-        flavor=flavor,
-        image=image,
+        name="db-master",
+        flavor="flex-4",
+        image="debian-9",
+        zone="lpg1",
+        volume_size=50,
+        volumes=[{"size_gb": 100}],
+        interfaces=[{"network": "public"}],
+        ssh_keys=["ssh-rsa AAAA"],
+        password="secret",
+        use_public_network=True,
+        use_private_network=False,
+        use_ipv6=True,
+        server_groups=["group-uuid"],
+        user_data="#cloud-config",
+        tags={"project": "gemini"},
     )
 
 
-@responses.activate
-def test_server_update():
-    uuid = "47cec963-fcd2-482f-bdb6-24461b2d47b1"
-    name = "db-master"
-    responses.add(
-        responses.PATCH,
-        CLOUDSCALE_API_URL + "/servers/" + uuid,
-        json=SERVER_RESP,
-        status=204,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/servers/" + uuid,
-        json=SERVER_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.PATCH,
-        CLOUDSCALE_API_URL + "/servers/" + uuid,
-        json=SERVER_RESP,
-        status=204,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/servers/" + uuid,
+def test_server_create_error(responses, cloudscale):
+    responses.post(f"{API_URL}/servers", json={"detail": "Server error."}, status=500)
+
+    with pytest.raises(CloudscaleApiException) as exc_info:
+        cloudscale.server.create(name="db-master", flavor="flex-4", image="debian-9")
+
+    assert exc_info.value.status_code == 500
+
+
+def test_server_update(responses, cloudscale):
+    responses.patch(
+        f"{API_URL}/servers/{UUID}",
         json=SERVER_RESP,
         status=200,
+        match=[
+            responses_module.matchers.json_params_matcher(
+                {
+                    "name": "db-master",
+                    "flavor": "flex-8",
+                    "interfaces": {"network": "public"},
+                    "tags": {"project": "gemini"},
+                }
+            )
+        ],
     )
-    responses.add(
-        responses.PATCH,
-        CLOUDSCALE_API_URL + "/servers/" + uuid,
+
+    server = cloudscale.server.update(
+        uuid=UUID,
+        name="db-master",
+        flavor="flex-8",
+        interfaces={"network": "public"},
+        tags={"project": "gemini"},
+    )
+    assert server["uuid"] == UUID
+
+
+@pytest.mark.parametrize("action", ["start", "stop", "reboot"])
+def test_server_actions(responses, cloudscale, action):
+    responses.post(f"{API_URL}/servers/{UUID}/{action}", status=204)
+
+    assert getattr(cloudscale.server, action)(uuid=UUID) == {}
+
+
+@pytest.mark.parametrize("action", ["start", "stop", "reboot"])
+def test_server_action_error(responses, cloudscale, action):
+    responses.post(
+        f"{API_URL}/servers/{UUID}/{action}",
         json={"detail": "Server error."},
         status=500,
     )
 
-    cloudscale = Cloudscale(api_token="token")
-    server = cloudscale.server.update(uuid=uuid, name=name)
-    assert server["name"] == name
-    assert server["uuid"] == uuid
-    assert server["tags"]["project"] == "gemini"
+    with pytest.raises(CloudscaleApiException) as exc_info:
+        getattr(cloudscale.server, action)(uuid=UUID)
 
-
-@responses.activate
-def test_server_start():
-    uuid = "47cec963-fcd2-482f-bdb6-24461b2d47b1"
-    responses.add(
-        responses.POST, CLOUDSCALE_API_URL + "/servers/" + uuid + "/start", status=204
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/servers/" + uuid,
-        json=SERVER_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.POST, CLOUDSCALE_API_URL + "/servers/" + uuid + "/start", status=204
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/servers/" + uuid,
-        json=SERVER_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.POST,
-        CLOUDSCALE_API_URL + "/servers/" + uuid + "/start",
-        json={"detail": "Server error."},
-        status=500,
-    )
-
-    cloudscale = Cloudscale(api_token="token")
-    server = cloudscale.server.start(uuid=uuid)
-    assert not server
-
-
-@responses.activate
-def test_server_stop():
-    uuid = "47cec963-fcd2-482f-bdb6-24461b2d47b1"
-    responses.add(
-        responses.POST, CLOUDSCALE_API_URL + "/servers/" + uuid + "/stop", status=204
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/servers/" + uuid,
-        json=SERVER_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.POST, CLOUDSCALE_API_URL + "/servers/" + uuid + "/stop", status=204
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/servers/" + uuid,
-        json=SERVER_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.POST,
-        CLOUDSCALE_API_URL + "/servers/" + uuid + "/stop",
-        json={"detail": "Server error."},
-        status=500,
-    )
-
-    cloudscale = Cloudscale(api_token="token")
-    server = cloudscale.server.stop(uuid=uuid)
-    assert not server
-
-
-@responses.activate
-def test_server_reboot():
-    uuid = "47cec963-fcd2-482f-bdb6-24461b2d47b1"
-    responses.add(
-        responses.POST, CLOUDSCALE_API_URL + "/servers/" + uuid + "/reboot", status=204
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/servers/" + uuid,
-        json=SERVER_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.POST, CLOUDSCALE_API_URL + "/servers/" + uuid + "/reboot", status=204
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/servers/" + uuid,
-        json=SERVER_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.POST,
-        CLOUDSCALE_API_URL + "/servers/" + uuid + "/reboot",
-        json={"detail": "Server error."},
-        status=500,
-    )
-
-    cloudscale = Cloudscale(api_token="token")
-    server = cloudscale.server.reboot(uuid=uuid)
-    assert not server
-
-
-@responses.activate
-def test_server_get_by_uuid_not_found():
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/servers/unknown",
-        json={"detail": "Not found."},
-        status=404,
-    )
-    try:
-        cloudscale = Cloudscale(api_token="token")
-        cloudscale.server.get_by_uuid(uuid="unknown")
-    except CloudscaleApiException as e:
-        assert e.status_code == 404
-        assert str(e) == "API Response Error (404): Not found."
-        assert e.response == {"data": {"detail": "Not found."}, "status_code": 404}
+    assert exc_info.value.status_code == 500

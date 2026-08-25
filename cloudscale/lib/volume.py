@@ -1,6 +1,4 @@
-from typing import Optional
-
-from . import CloudscaleMutable
+from .base import CloudscaleMutable
 
 
 class Volume(CloudscaleMutable):
@@ -11,9 +9,9 @@ class Volume(CloudscaleMutable):
         name: str,
         server_uuids: list,
         size_gb: int,
-        volume_type: Optional[str] = None,
-        zone: Optional[str] = None,
-        tags: Optional[dict] = None,
+        volume_type: str | None = None,
+        zone: str | None = None,
+        tags: dict | None = None,
     ) -> dict:
         """Creates a Volume.
 
@@ -41,10 +39,10 @@ class Volume(CloudscaleMutable):
     def update(
         self,
         uuid: str,
-        name: Optional[str] = None,
-        server_uuids: Optional[list] = None,
-        size_gb: Optional[int] = None,
-        tags: Optional[dict] = None,
+        name: str | None = None,
+        server_uuids: list | None = None,
+        size_gb: int | None = None,
+        tags: dict | None = None,
     ) -> dict:
         """Updates a volume.
 

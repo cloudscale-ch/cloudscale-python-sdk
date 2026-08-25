@@ -1,3 +1,5 @@
+import warnings
+
 from .base import CloudscaleMutable
 
 
@@ -10,7 +12,7 @@ class Server(CloudscaleMutable):
         flavor: str,
         image: str,
         zone: str | None = None,
-        volume_size: int | None = None,
+        volume_size_gb: int | None = None,
         volumes: list | None = None,
         interfaces: list | None = None,
         ssh_keys: list | None = None,
@@ -21,6 +23,7 @@ class Server(CloudscaleMutable):
         server_groups: list | None = None,
         user_data: str | None = None,
         tags: dict | None = None,
+        volume_size: int | None = None,
     ) -> dict:
         """Creates a server.
 
@@ -29,7 +32,7 @@ class Server(CloudscaleMutable):
             flavor (str): The flavor of the server.
             image (str): The image of the server.
             zone (str, optional): The zone the server is created in. Defaults to None.
-            volume_size (int, optional): The volume size of the server. Defaults to None.
+            volume_size_gb (int, optional): The size of the root volume in GiB (1024^3). Defaults to None.
             volumes (list, optional): A list of volumes to be created and attached to the server. Defaults to None.
             interfaces (list, optional): A list of interfacs to be attached to the server. Defaults to None.
             ssh_keys (list, optional): A list of SSH public keys to be placed on the server. Defaults to None.
@@ -40,15 +43,26 @@ class Server(CloudscaleMutable):
             server_groups (list, optional): A list of server groups UUIDs the server should be placed in. Defaults to None.
             user_data (str, optional): The user data startup config. Defaults to None.
             tags (dict, optional): The tags assigned to the server. Defaults to None.
+            volume_size (int, optional): Deprecated alias of volume_size_gb. Defaults to None.
 
         Returns:
             dict: API data response.
         """
+        if volume_size is not None:
+            warnings.warn(
+                "volume_size is deprecated, use volume_size_gb instead",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if volume_size_gb is None:
+                volume_size_gb = volume_size
+
         payload = {
             "name": name,
             "flavor": flavor,
             "image": image,
             "zone": zone,
+            "volume_size_gb": volume_size_gb,
             "volumes": volumes,
             "interfaces": interfaces,
             "ssh_keys": ssh_keys,

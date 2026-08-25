@@ -112,6 +112,7 @@ def test_server_create_with_all_options(responses, cloudscale):
                     "flavor": "flex-4",
                     "image": "debian-9",
                     "zone": "lpg1",
+                    "volume_size_gb": 50,
                     "volumes": [{"size_gb": 100}],
                     "interfaces": [{"network": "public"}],
                     "ssh_keys": ["ssh-rsa AAAA"],
@@ -132,7 +133,7 @@ def test_server_create_with_all_options(responses, cloudscale):
         flavor="flex-4",
         image="debian-9",
         zone="lpg1",
-        volume_size=50,
+        volume_size_gb=50,
         volumes=[{"size_gb": 100}],
         interfaces=[{"network": "public"}],
         ssh_keys=["ssh-rsa AAAA"],
@@ -153,6 +154,94 @@ def test_server_create_error(responses, cloudscale):
         cloudscale.server.create(name="db-master", flavor="flex-4", image="debian-9")
 
     assert exc_info.value.status_code == 500
+
+
+def test_server_create_with_volume_size_gb(responses, cloudscale):
+    responses.post(
+        f"{API_URL}/servers",
+        json=SERVER_RESP,
+        status=201,
+        match=[
+            responses_module.matchers.json_params_matcher(
+                {
+                    "name": "db-master",
+                    "flavor": "flex-4",
+                    "image": "debian-9",
+                    "volume_size_gb": 100,
+                }
+            )
+        ],
+    )
+
+    cloudscale.server.create(
+        name="db-master", flavor="flex-4", image="debian-9", volume_size_gb=100
+    )
+
+
+def test_server_create_with_deprecated_volume_size(responses, cloudscale):
+    """The legacy name still works, but is sent as volume_size_gb."""
+    responses.post(
+        f"{API_URL}/servers",
+        json=SERVER_RESP,
+        status=201,
+        match=[
+            responses_module.matchers.json_params_matcher(
+                {
+                    "name": "db-master",
+                    "flavor": "flex-4",
+                    "image": "debian-9",
+                    "volume_size_gb": 100,
+                }
+            )
+        ],
+    )
+
+    with pytest.warns(DeprecationWarning, match="use volume_size_gb instead"):
+        cloudscale.server.create(
+            name="db-master", flavor="flex-4", image="debian-9", volume_size=100
+        )
+
+
+def test_server_create_volume_size_gb_wins_over_the_alias(responses, cloudscale):
+    responses.post(
+        f"{API_URL}/servers",
+        json=SERVER_RESP,
+        status=201,
+        match=[
+            responses_module.matchers.json_params_matcher(
+                {
+                    "name": "db-master",
+                    "flavor": "flex-4",
+                    "image": "debian-9",
+                    "volume_size_gb": 100,
+                }
+            )
+        ],
+    )
+
+    with pytest.warns(DeprecationWarning):
+        cloudscale.server.create(
+            name="db-master",
+            flavor="flex-4",
+            image="debian-9",
+            volume_size_gb=100,
+            volume_size=50,
+        )
+
+
+def test_server_create_without_volume_size_omits_it(responses, cloudscale):
+    responses.post(
+        f"{API_URL}/servers",
+        json=SERVER_RESP,
+        status=201,
+        match=[
+            responses_module.matchers.json_params_matcher(
+                {"name": "db-master", "flavor": "flex-4", "image": "debian-9"}
+            )
+        ],
+    )
+
+    cloudscale.server.create(name="db-master", flavor="flex-4", image="debian-9")
 
 
 def test_server_update(responses, cloudscale):

@@ -1,6 +1,4 @@
-from typing import Optional
-
-from . import CloudscaleMutable
+from .base import CloudscaleMutable
 
 
 class Subnet(CloudscaleMutable):
@@ -10,9 +8,9 @@ class Subnet(CloudscaleMutable):
         self,
         cidr: str,
         network_uuid: str,
-        gateway_address: Optional[str] = None,
-        dns_servers: Optional[list] = None,
-        tags: Optional[dict] = None,
+        gateway_address: str | None = None,
+        dns_servers: list | None = None,
+        tags: dict | None = None,
     ) -> dict:
         """Creates a subnet.
 
@@ -38,9 +36,9 @@ class Subnet(CloudscaleMutable):
     def update(
         self,
         uuid: str,
-        gateway_address: Optional[str] = None,
-        dns_servers: Optional[list] = None,
-        tags: Optional[dict] = None,
+        gateway_address: str | None = None,
+        dns_servers: list | None = None,
+        tags: dict | None = None,
     ) -> dict:
         """Updates a subnet.
 

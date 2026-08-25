@@ -1,14 +1,15 @@
-import responses
-from cloudscale import (
-    CLOUDSCALE_API_URL,
-    Cloudscale,
-    CloudscaleApiException,
-    CloudscaleException,
-)
+import pytest
+import responses as responses_module
+
+from cloudscale import CloudscaleApiException
+
+from .conftest import API_URL
+
+USER_ID = "6fe39134bf4178747eebc429f82cfafdd08891d4279d0d899bc4012db1db6a15"
 
 OBJECTS_USER_RESP = {
-    "href": "https://api.cloudscale.ch/v1/objects-users/6fe39134bf4178747eebc429f82cfafdd08891d4279d0d899bc4012db1db6a15",
-    "id": "6fe39134bf4178747eebc429f82cfafdd08891d4279d0d899bc4012db1db6a15",
+    "href": f"https://api.cloudscale.ch/v1/objects-users/{USER_ID}",
+    "id": USER_ID,
     "display_name": "alan",
     "keys": [
         {
@@ -20,196 +21,104 @@ OBJECTS_USER_RESP = {
 }
 
 
-@responses.activate
-def test_objects_user_get_all():
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/objects-users",
-        json=[OBJECTS_USER_RESP],
-        status=200,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/objects-users?tag:project=apollo",
-        json=[OBJECTS_USER_RESP],
-        status=200,
-    )
-    responses.add(
-        responses.GET, CLOUDSCALE_API_URL + "/objects-users", json={}, status=500
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/objects-users",
-        json=[OBJECTS_USER_RESP],
-        status=200,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/objects-users?tag:project=apollo",
-        json=[OBJECTS_USER_RESP],
-        status=200,
-    )
-    responses.add(
-        responses.GET, CLOUDSCALE_API_URL + "/objects-users", json={}, status=500
-    )
+def test_objects_user_get_all(responses, cloudscale):
+    responses.get(f"{API_URL}/objects-users", json=[OBJECTS_USER_RESP], status=200)
 
-    cloudscale = Cloudscale(api_token="token")
     objects_users = cloudscale.objects_user.get_all()
     assert objects_users[0]["display_name"] == "alan"
-    assert (
-        objects_users[0]["id"]
-        == "6fe39134bf4178747eebc429f82cfafdd08891d4279d0d899bc4012db1db6a15"
+    assert objects_users[0]["id"] == USER_ID
+
+
+def test_objects_user_get_all_filtered(responses, cloudscale):
+    responses.get(
+        f"{API_URL}/objects-users",
+        json=[OBJECTS_USER_RESP],
+        status=200,
+        match=[responses_module.matchers.query_string_matcher("tag:project=apollo")],
     )
 
-    cloudscale = Cloudscale(api_token="token")
     objects_users = cloudscale.objects_user.get_all(filter_tag="project=apollo")
-    assert objects_users[0]["display_name"] == "alan"
-    assert (
-        objects_users[0]["id"]
-        == "6fe39134bf4178747eebc429f82cfafdd08891d4279d0d899bc4012db1db6a15"
-    )
+    assert objects_users[0]["tags"]["project"] == "apollo"
 
-    try:
-        cloudscale = Cloudscale(api_token="token")
+
+def test_objects_user_get_all_error(responses, cloudscale):
+    responses.get(f"{API_URL}/objects-users", json={}, status=500)
+
+    with pytest.raises(CloudscaleApiException) as exc_info:
         cloudscale.objects_user.get_all()
-    except CloudscaleApiException as e:
-        assert e.status_code == 500
-        assert str(e).startswith("API Response Error (500):")
+
+    assert exc_info.value.status_code == 500
+    assert str(exc_info.value).startswith("API Response Error (500):")
 
 
-@responses.activate
-def test_objects_user_get_by_uuid():
-    uuid = "6fe39134bf4178747eebc429f82cfafdd08891d4279d0d899bc4012db1db6a15"
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/objects-users/" + uuid,
-        json=OBJECTS_USER_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/objects-users/unknown",
-        json={},
-        status=404,
+def test_objects_user_get_by_uuid(responses, cloudscale):
+    responses.get(
+        f"{API_URL}/objects-users/{USER_ID}", json=OBJECTS_USER_RESP, status=200
     )
 
-    cloudscale = Cloudscale(api_token="token")
-    objects_user = cloudscale.objects_user.get_by_uuid(uuid=uuid)
+    objects_user = cloudscale.objects_user.get_by_uuid(uuid=USER_ID)
     assert objects_user["display_name"] == "alan"
-    assert objects_user["id"] == uuid
-
-    try:
-        cloudscale = Cloudscale(api_token="token")
-        cloudscale.objects_user.get_by_uuid(uuid="unknown")
-    except CloudscaleApiException as e:
-        assert e.status_code == 404
+    assert objects_user["id"] == USER_ID
 
 
-@responses.activate
-def test_objects_user_delete():
-    uuid = "6fe39134bf4178747eebc429f82cfafdd08891d4279d0d899bc4012db1db6a15"
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/objects-users/" + uuid,
-        json=OBJECTS_USER_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/objects-users/unknown",
-        json=OBJECTS_USER_RESP,
-        status=200,
-    )
-    responses.add(
-        responses.DELETE, CLOUDSCALE_API_URL + "/objects-users/" + uuid, status=204
-    )
-    responses.add(
-        responses.DELETE,
-        CLOUDSCALE_API_URL + "/objects-users/unknown",
-        json={},
-        status=404,
-    )
+def test_objects_user_delete(responses, cloudscale):
+    responses.delete(f"{API_URL}/objects-users/{USER_ID}", status=204)
 
-    cloudscale = Cloudscale(api_token="token")
-    objects_user = cloudscale.objects_user.delete(uuid=uuid)
-    assert not objects_user
+    assert not cloudscale.objects_user.delete(uuid=USER_ID)
 
-    try:
-        cloudscale = Cloudscale(api_token="token")
+
+def test_objects_user_delete_not_found(responses, cloudscale):
+    responses.delete(f"{API_URL}/objects-users/unknown", json={}, status=404)
+
+    with pytest.raises(CloudscaleApiException) as exc_info:
         cloudscale.objects_user.delete(uuid="unknown")
-    except CloudscaleApiException as e:
-        assert e.status_code == 404
+
+    assert exc_info.value.status_code == 404
 
 
-@responses.activate
-def test_objects_user_create():
-    display_name = "alan"
-
-    responses.add(
-        responses.POST,
-        CLOUDSCALE_API_URL + "/objects-users",
+def test_objects_user_create(responses, cloudscale):
+    responses.post(
+        f"{API_URL}/objects-users",
         json=OBJECTS_USER_RESP,
         status=201,
-    )
-    responses.add(
-        responses.POST, CLOUDSCALE_API_URL + "/objects-users", json={}, status=500
-    )
-    responses.add(
-        responses.POST,
-        CLOUDSCALE_API_URL + "/objects-users",
-        json=OBJECTS_USER_RESP,
-        status=201,
-    )
-    responses.add(
-        responses.POST, CLOUDSCALE_API_URL + "/objects-users", json={}, status=500
+        match=[
+            responses_module.matchers.json_params_matcher(
+                {"display_name": "alan", "tags": {"project": "apollo"}}
+            )
+        ],
     )
 
-    cloudscale = Cloudscale(api_token="token")
-    cloudscale.objects_user.create(
-        display_name=display_name,
+    objects_user = cloudscale.objects_user.create(
+        display_name="alan", tags={"project": "apollo"}
     )
-
-    try:
-        cloudscale = Cloudscale(api_token="token")
-        cloudscale.objects_user.create(
-            display_name=display_name,
-        )
-    except CloudscaleApiException as e:
-        assert e.status_code == 500
+    assert objects_user["id"] == USER_ID
 
 
-@responses.activate
-def test_objects_user_update():
-    uuid = "6fe39134bf4178747eebc429f82cfafdd08891d4279d0d899bc4012db1db6a15"
-    display_name = "alan"
-    responses.add(
-        responses.PATCH,
-        CLOUDSCALE_API_URL + "/objects-users/" + uuid,
-        json=OBJECTS_USER_RESP,
-        status=204,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/objects-users/" + uuid,
+def test_objects_user_create_error(responses, cloudscale):
+    responses.post(f"{API_URL}/objects-users", json={}, status=500)
+
+    with pytest.raises(CloudscaleApiException) as exc_info:
+        cloudscale.objects_user.create(display_name="alan")
+
+    assert exc_info.value.status_code == 500
+
+
+def test_objects_user_update(responses, cloudscale):
+    responses.patch(
+        f"{API_URL}/objects-users/{USER_ID}",
         json=OBJECTS_USER_RESP,
         status=200,
-    )
-    responses.add(
-        responses.PATCH,
-        CLOUDSCALE_API_URL + "/objects-users/unknown",
-        json={},
-        status=404,
+        match=[responses_module.matchers.json_params_matcher({"display_name": "alan"})],
     )
 
-    cloudscale = Cloudscale(api_token="token")
-    objects_user = cloudscale.objects_user.update(uuid=uuid, display_name=display_name)
-    assert objects_user["display_name"] == display_name
-    assert objects_user["id"] == uuid
+    objects_user = cloudscale.objects_user.update(uuid=USER_ID, display_name="alan")
+    assert objects_user["display_name"] == "alan"
 
-    try:
-        cloudscale = Cloudscale(api_token="token")
-        objects_user = cloudscale.objects_user.update(
-            uuid="unknown", display_name=display_name
-        )
-    except CloudscaleApiException as e:
-        assert e.status_code == 404
+
+def test_objects_user_update_not_found(responses, cloudscale):
+    responses.patch(f"{API_URL}/objects-users/unknown", json={}, status=404)
+
+    with pytest.raises(CloudscaleApiException) as exc_info:
+        cloudscale.objects_user.update(uuid="unknown", display_name="alan")
+
+    assert exc_info.value.status_code == 404

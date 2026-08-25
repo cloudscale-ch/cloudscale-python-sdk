@@ -1,17 +1,16 @@
-import unittest
+import pytest
+import responses as responses_module
 
-import responses
-from cloudscale import (
-    CLOUDSCALE_API_URL,
-    Cloudscale,
-    CloudscaleApiException,
-    CloudscaleException,
-)
+from cloudscale import CloudscaleApiException
+
+from .conftest import API_URL
+
+UUID = "11111111-1864-4608-853a-0771b6885a3a"
 
 CUSTOM_IMAGE_RESP = {
-    "href": "https://api.cloudscale.ch/v1/custom-images/11111111-1864-4608-853a-0771b6885a3a",
+    "href": f"https://api.cloudscale.ch/v1/custom-images/{UUID}",
     "created_at": "2020-05-29T13:18:42.511407Z",
-    "uuid": "11111111-1864-4608-853a-0771b6885a3a",
+    "uuid": UUID,
     "name": "my-image",
     "slug": "my-image-slug",
     "checksums": {
@@ -24,11 +23,11 @@ CUSTOM_IMAGE_RESP = {
 }
 
 CUSTOM_IMAGE_IMPORT_RESP = {
-    "href": "https://api.cloudscale.ch/v1/custom-images/import/11111111-1864-4608-853a-0771b6885a3a",
-    "uuid": "11111111-1864-4608-853a-0771b6885a3a",
+    "href": f"https://api.cloudscale.ch/v1/custom-images/import/{UUID}",
+    "uuid": UUID,
     "custom_image": {
-        "href": "https://api.cloudscale.ch/v1/custom-images/11111111-1864-4608-853a-0771b6885a3a",
-        "uuid": "11111111-1864-4608-853a-0771b6885a3a",
+        "href": f"https://api.cloudscale.ch/v1/custom-images/{UUID}",
+        "uuid": UUID,
         "name": "my-image",
     },
     "url": "https://example.com/foo.raw",
@@ -36,133 +35,111 @@ CUSTOM_IMAGE_IMPORT_RESP = {
 }
 
 
-@responses.activate
-def test_custom_images_get_all():
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/custom-images",
-        json=[CUSTOM_IMAGE_RESP],
-        status=200,
-    )
+def test_custom_image_get_all(responses, cloudscale):
+    responses.get(f"{API_URL}/custom-images", json=[CUSTOM_IMAGE_RESP], status=200)
 
-    cloudscale = Cloudscale(api_token="token")
     custom_images = cloudscale.custom_image.get_all()
     assert custom_images[0]["name"] == "my-image"
-    assert custom_images[0]["uuid"] == "11111111-1864-4608-853a-0771b6885a3a"
+    assert custom_images[0]["uuid"] == UUID
 
 
-@responses.activate
-def test_custom_images_get_by_uuid():
-    uuid = "11111111-1864-4608-853a-0771b6885a3a"
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/custom-images/" + uuid,
-        json=CUSTOM_IMAGE_RESP,
-        status=200,
-    )
+def test_custom_image_get_by_uuid(responses, cloudscale):
+    responses.get(f"{API_URL}/custom-images/{UUID}", json=CUSTOM_IMAGE_RESP, status=200)
 
-    cloudscale = Cloudscale(api_token="token")
-    custom_image = cloudscale.custom_image.get_by_uuid(uuid=uuid)
+    custom_image = cloudscale.custom_image.get_by_uuid(uuid=UUID)
     assert custom_image["name"] == "my-image"
-    assert custom_image["uuid"] == uuid
+    assert custom_image["uuid"] == UUID
 
 
-@responses.activate
-def test_custom_images_delete():
-    uuid = "11111111-1864-4608-853a-0771b6885a3a"
-    responses.add(
-        responses.DELETE, CLOUDSCALE_API_URL + "/custom-images/" + uuid, status=204
-    )
-    responses.add(
-        responses.DELETE,
-        CLOUDSCALE_API_URL + "/custom-images/unknown",
-        json={"detail": "Not found."},
-        status=404,
+def test_custom_image_delete(responses, cloudscale):
+    responses.delete(f"{API_URL}/custom-images/{UUID}", status=204)
+
+    assert not cloudscale.custom_image.delete(uuid=UUID)
+
+
+def test_custom_image_delete_not_found(responses, cloudscale):
+    responses.delete(
+        f"{API_URL}/custom-images/unknown", json={"detail": "Not found."}, status=404
     )
 
-    cloudscale = Cloudscale(api_token="token")
-    custom_image = cloudscale.custom_image.delete(uuid=uuid)
-    assert not custom_image
-
-    try:
-        cloudscale = Cloudscale(api_token="token")
+    with pytest.raises(CloudscaleApiException) as exc_info:
         cloudscale.custom_image.delete(uuid="unknown")
-    except CloudscaleApiException as e:
-        assert e.status_code == 404
+
+    assert exc_info.value.status_code == 404
 
 
-@responses.activate
-def test_custom_images_import():
-    name = "my-image"
-    responses.add(
-        responses.POST,
-        CLOUDSCALE_API_URL + "/custom-images/import",
+def test_custom_image_import_by_url(responses, cloudscale):
+    responses.post(
+        f"{API_URL}/custom-images/import",
         json=CUSTOM_IMAGE_IMPORT_RESP,
         status=201,
+        match=[
+            responses_module.matchers.json_params_matcher(
+                {
+                    "url": "https://example.com/foo.raw",
+                    "name": "my-image",
+                    "slug": "my-image-slug",
+                    "zones": ["lpg1"],
+                    "user_data_handling": "pass-through",
+                    "source_format": "raw",
+                    "tags": {"project": "apollo"},
+                }
+            )
+        ],
     )
 
-    cloudscale = Cloudscale(api_token="token")
-    cloudscale.custom_image.import_by_url(
+    custom_image = cloudscale.custom_image.import_by_url(
         url="https://example.com/foo.raw",
-        name=name,
+        name="my-image",
         slug="my-image-slug",
         user_data_handling="pass-through",
         source_format="raw",
         zones=["lpg1"],
+        tags={"project": "apollo"},
     )
+    assert custom_image["status"] == "in_progress"
 
 
-def test_custom_images_create_raise_error():
-    try:
-        cloudscale = Cloudscale(api_token="token")
-        cloudscale.custom_image.create(
-            url="https://example.com/foo.raw",
-            name="my-image",
-            slug="my-image-slug",
-            user_data_handling="pass-through",
-            source_format="raw",
-            zones=["lpg1"],
-        )
-    except NotImplementedError:
-        pass
-    else:
-        assert False
+def test_custom_image_create_is_not_implemented(cloudscale):
+    with pytest.raises(NotImplementedError):
+        cloudscale.custom_image.create(name="my-image")
 
 
-@responses.activate
-def test_custom_images_update():
-    uuid = "11111111-1864-4608-853a-0771b6885a3a"
-    name = "my-image"
-    responses.add(
-        responses.PATCH,
-        CLOUDSCALE_API_URL + "/custom-images/" + uuid,
-        json=CUSTOM_IMAGE_RESP,
-        status=204,
-    )
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/custom-images/" + uuid,
+def test_custom_image_update(responses, cloudscale):
+    responses.patch(
+        f"{API_URL}/custom-images/{UUID}",
         json=CUSTOM_IMAGE_RESP,
         status=200,
+        match=[
+            responses_module.matchers.json_params_matcher(
+                {
+                    "name": "my-image",
+                    "slug": "my-image-slug",
+                    "user_data_handling": "pass-through",
+                    "tags": {},
+                }
+            )
+        ],
     )
-    cloudscale = Cloudscale(api_token="token")
-    custom_image = cloudscale.custom_image.update(uuid=uuid, name=name)
-    assert custom_image["name"] == name
-    assert custom_image["uuid"] == uuid
+
+    custom_image = cloudscale.custom_image.update(
+        uuid=UUID,
+        name="my-image",
+        slug="my-image-slug",
+        user_data_handling="pass-through",
+        tags={},
+    )
+    assert custom_image["name"] == "my-image"
 
 
-@responses.activate
-def test_custom_image_import_status():
-    uuid = "11111111-1864-4608-853a-0771b6885a3a"
-    responses.add(
-        responses.GET,
-        CLOUDSCALE_API_URL + "/custom-images/import/" + uuid,
+def test_custom_image_get_import_by_uuid(responses, cloudscale):
+    responses.get(
+        f"{API_URL}/custom-images/import/{UUID}",
         json=CUSTOM_IMAGE_IMPORT_RESP,
         status=200,
     )
 
-    cloudscale = Cloudscale(api_token="token")
-    custom_image = cloudscale.custom_image.get_import_by_uuid(uuid=uuid)
+    custom_image = cloudscale.custom_image.get_import_by_uuid(uuid=UUID)
     assert custom_image["custom_image"]["name"] == "my-image"
-    assert custom_image["uuid"] == uuid
+    assert custom_image["uuid"] == UUID
     assert custom_image["status"] == "in_progress"

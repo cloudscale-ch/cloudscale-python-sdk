@@ -1,12 +1,10 @@
-from typing import Optional
-
-from . import CloudscaleMutable
+from .base import CloudscaleMutable
 
 
 class ObjectsUser(CloudscaleMutable):
     resource = "objects-users"
 
-    def create(self, display_name: str, tags: Optional[dict] = None) -> dict:
+    def create(self, display_name: str, tags: dict | None = None) -> dict:
         """Creates an objects user.
 
         Args:
@@ -23,7 +21,7 @@ class ObjectsUser(CloudscaleMutable):
         return super().create(payload=payload)
 
     def update(
-        self, uuid: str, display_name: Optional[str] = None, tags: Optional[dict] = None
+        self, uuid: str, display_name: str | None = None, tags: dict | None = None
     ) -> dict:
         """Updates an objects user.
 

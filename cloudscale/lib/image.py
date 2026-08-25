@@ -1,4 +1,4 @@
-from . import CloudscaleBase
+from .base import CloudscaleBase
 
 
 class Image(CloudscaleBase):

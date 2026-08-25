@@ -1,6 +1,4 @@
-from typing import Optional
-
-from . import CloudscaleMutable
+from .base import CloudscaleMutable
 
 
 class CustomImage(CloudscaleMutable):
@@ -14,7 +12,7 @@ class CustomImage(CloudscaleMutable):
         zones: list,
         user_data_handling: str,
         source_format: str,
-        tags: Optional[dict] = None,
+        tags: dict | None = None,
     ) -> dict:
         """Imports a custom image.
 
@@ -51,16 +49,21 @@ class CustomImage(CloudscaleMutable):
         """
         return super().get_by_uuid(uuid=uuid, path="/import")
 
-    def create(self, **kwargs):
+    def create(self, *args, **kwargs):
+        """Not available, use :meth:`import_by_url` instead.
+
+        Raises:
+            NotImplementedError: Always, custom images cannot be created directly.
+        """
         raise NotImplementedError
 
     def update(
         self,
         uuid: str,
-        name: Optional[str] = None,
-        slug: Optional[str] = None,
-        user_data_handling: Optional[str] = None,
-        tags: Optional[dict] = None,
+        name: str | None = None,
+        slug: str | None = None,
+        user_data_handling: str | None = None,
+        tags: dict | None = None,
     ) -> dict:
         """Updates a custom image.
 
